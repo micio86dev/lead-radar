@@ -166,3 +166,9 @@ L9. Verified: 96 library tests, 17 API integration tests, clippy -D warnings, ca
     end-to-end tests against a real local stack (SQLite + api + worker + SSR frontend).
 L10. No provider credential exists in this environment: live Apify/Jev/Laya/Qwen calls are reported
     as unverified in docs/status.md, with contract tests covering the documented shapes.
+L11. Docker verification: both images build; `docker compose up -d` reports api/worker/frontend healthy;
+     `/health` and `/ready` answer 200; `db seed` inside the container seeds the tenant, 5 profiles,
+     56 keywords, 24 communities, 12 benchmark items. A containerized import with unconfigured
+     providers produced a `dead_letter` decision job ("provider jev is not configured") and no lead.
+L12. Coverage tooling (`cargo llvm-cov`) is not installed in this environment: no coverage percentage
+     is claimed. Exact test counts are reported instead.

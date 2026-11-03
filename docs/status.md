@@ -22,6 +22,8 @@ Last updated from observed runs on this machine. Nothing here is aspirational.
 | Job retry and dead letter | implemented, tested | `jobs_can_be_retried_and_dead_letters_are_visible` |
 | Frontend typecheck, lint, unit tests, build | passing | `astro check && vue-tsc`, `prettier --check`, Vitest (10 tests), `astro build` |
 | End-to-end (dashboard, inbox, import pipeline, review queue) | passing | `./scripts/e2e-local.sh`: 3 Playwright tests |
+| Docker images and Compose startup | verified | `docker build` for both images; `docker compose up -d` → api/worker/frontend healthy; `/health` and `/ready` 200 |
+| Containerized import with unconfigured providers | verified behaviour | import stored the post, the decision job failed `dead_letter` with `provider jev is not configured`, no lead was invented |
 
 ## Not verified against live services
 
@@ -37,7 +39,8 @@ No `APIFY_API_TOKEN`, `JEV_API_KEY`, `LAYA_API_KEY` or `QWEN_*` credential exist
 
 ## Blocked or intentionally out of scope
 
-- Real provider credentials and a validated Actor id (operator-supplied).
+- Real provider credentials and a validated Actor id (operator-supplied). The container stack was started
+  without them, so the pipeline stopped exactly where it must: a visible provider error, no fake lead.
 - PostgreSQL: schema and repositories are portable, but no PostgreSQL migration was written.
 - Redis or another broker: the durable queue is SQLite by design.
 - Rate limiting inside the application: expected from the reverse proxy.
