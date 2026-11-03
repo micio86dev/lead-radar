@@ -53,6 +53,36 @@ make lint          # fmt check + clippy -D warnings + prettier + typecheck
 make fmt
 ```
 
+## Secrets
+
+Never paste a credential into a shell command, an issue or a chat: it ends up in shell history, process
+lists or logs. Use the hidden-input helper, which validates the documented shape before writing and
+prints only PASS/FAIL:
+
+```bash
+./scripts/set-secret.sh JEV_API_KEY      # sk-glm5-…
+./scripts/set-secret.sh APIFY_API_TOKEN  # apify_api_…
+./scripts/set-secret.sh QWEN_API_KEY     # OpenAI-compatible key
+./scripts/set-secret.sh LAYA_API_KEY     # lsk_…
+```
+
+Then recreate the containers so they read the new value:
+
+```bash
+docker compose up -d --force-recreate api worker frontend
+```
+
+Verify a provider with one explicit, possibly billable probe (never on page render):
+
+```bash
+set -a; . ./.env; set +a
+curl -s -X POST http://localhost:8080/api/v1/providers/jev/test \
+  -H "Authorization: Bearer $DEV_API_TOKEN" -H 'Content-Type: application/json' -d '{}'
+```
+
+A `401 invalid_api_key` from Jev means the value is not a full key: the documented form starts with
+`sk-glm5-` and is shown only once in the provider dashboard.
+
 ## Conventions
 
 - Conventional Commits; one reviewable work unit per commit with `Risk:` in the body.
