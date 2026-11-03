@@ -52,6 +52,25 @@ opportunities inbox renders rows or an empty state; a manual JSON import reaches
 worker and its detail page shows content plus the score breakdown; the review queue renders; no
 publication surface exists.
 
+## Smoke test against a running stack
+
+`./scripts/smoke-live.sh` exercises the real stack (real providers, real worker): it imports one
+conversation whose text matches the seeded keywords, waits for the worker to create the lead, and prints
+the score, the decision metadata and the URLs to continue in the browser. It uses the bearer token from
+`.env` and never prints it.
+
+```bash
+./scripts/smoke-live.sh
+# then open the printed /opportunities/<id>, click "Draft three comment variants",
+# and review them at /review
+```
+
+The import and the structured decision are billed; the comment drafting is a separate, explicit click.
+A failure prints the job queue state (`GET /api/v1/jobs`) instead of guessing.
+
+Run it after rebuilding the images (`docker compose build api`) — a stale image explains most "why is
+this broken" moments.
+
 ## What is not covered
 
 - Live calls to Apify, Jev, Laya and Qwen: no credentials existed in the build environment. The adapters
