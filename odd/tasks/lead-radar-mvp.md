@@ -172,3 +172,11 @@ L11. Docker verification: both images build; `docker compose up -d` reports api/
      providers produced a `dead_letter` decision job ("provider jev is not configured") and no lead.
 L12. Coverage tooling (`cargo llvm-cov`) is not installed in this environment: no coverage percentage
      is claimed. Exact test counts are reported instead.
+L13. Live provider verification (operator-supplied credentials): Apify token valid; Qwen (DashScope
+     International, qwen-plus) generated 3/3 variants in English and 3/3 in Spanish; Jev works through the
+     TypeSafe deployment (api.typesafe.ai/v1/systemone, jev-1.14.0) after two defects were fixed — the
+     choice-criteria wire shape and the generative prompt/policy alignment.
+L14. UI work: import page, consistent vertical spacing scale, provider staleness, source validation, and
+     an explicit origin policy replacing Astro's blanket CSRF rule. Communities: 17 enabled with recorded
+     evidence, 7 excluded with a note. The Reddit Actor is registered disabled with a $0.10 provider-side
+     cap pending the operator's compliance decision on unofficial scrapers.

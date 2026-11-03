@@ -47,6 +47,10 @@ frontend and runs the suite:
 ./scripts/e2e-local.sh
 ```
 
+The action endpoint has its own spec (`tests/e2e/action.spec.ts`): form posts without an Origin,
+cross-site origins refused, JSON bodies reaching the API, invalid import payloads and unsupported
+content types.
+
 Scenarios covered end to end: the dashboard renders and the navigation is keyboard reachable; the
 opportunities inbox renders rows or an empty state; a manual JSON import reaches the inbox through the
 worker and its detail page shows content plus the score breakdown; the review queue renders; no

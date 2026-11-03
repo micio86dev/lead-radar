@@ -20,6 +20,9 @@ Last updated from observed runs on this machine. Nothing here is aspirational.
 | Benchmarks (metrics, per language, unknown cost) | implemented, tested with mock | `benchmark_runs_against_the_seeded_evaluation_split` |
 | Seeds idempotent | implemented, tested | `seeds_are_idempotent` |
 | Job retry and dead letter | implemented, tested | `jobs_can_be_retried_and_dead_letters_are_visible` |
+| Frontend action endpoint (form/JSON, origin policy, 4xx) | implemented, tested | `tests/e2e/action.spec.ts` (5 tests) |
+| Source validation before enabling | implemented, tested | `sources_require_recorded_validation_before_enabling` |
+| Provider-side run cap (`maxTotalChargeUsd`) | implemented, tested | adapter wiremock body assertion + config test |
 | Frontend typecheck, lint, unit tests, build | passing | `astro check && vue-tsc`, `prettier --check`, Vitest (10 tests), `astro build` |
 | End-to-end (dashboard, inbox, import pipeline, review queue) | passing | `./scripts/e2e-local.sh`: 3 Playwright tests |
 | Docker images and Compose startup | verified | `docker build` for both images; `docker compose up -d` → api/worker/frontend healthy; `/health` and `/ready` 200 |
@@ -36,7 +39,7 @@ Credentials were configured later by the operator; the following probes were run
 | Qwen generation | **verified live** (DashScope International, `qwen-plus`): `/v1/models` 200, minimal probe `ok` (1074 ms), 3/3 English variants stored, 3/3 Spanish variants stored with `Aviso: trabajo en VoxTranslate.`, no corrective pass needed |
 | Jev decisions | **verified live** (TypeSafe deployment, `api.typesafe.ai/v1/systemone`, `jev-1.14.0`): real label distributions, 1546/590 tokens, 307 ms latency; the full pipeline produced a lead (score 79, `needs_review`) and Qwen drafted 3/3 comments |
 | Laya decisions | adapter implemented; disabled by default, no key configured |
-| Reddit / community validation | workflow implemented; **validation is an operator decision and was not performed** |
+| Reddit / community validation | 17 of the 24 seeded communities were relevance-reviewed and enabled with evidence recorded through the API (HR, international work, events/AV, support, hospitality); 7 were excluded with a note (IT operations, broadcast engineering, generic sales/SaaS, travel agents, smallbusiness). Reddit terms and per-subreddit rules remain the operator's responsibility |
 
 ### Defect found and fixed by the live verification
 

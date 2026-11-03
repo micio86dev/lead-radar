@@ -238,7 +238,7 @@ Body: `{ "lead_id": "uuid", "comment_id": "uuid|null", "kind": "reply|dm|meeting
 ## Sources
 
 - `GET /api/v1/sources` → paginated `Source` `{ id, name, provider, source_type, enabled,
-  validation_status, config: object, last_run_at, created_at }`.
+  validation_status, notes, config: object, last_run_at, created_at }`.
 - `POST /api/v1/sources` — `{ name, provider, source_type, config: object }` → `201`. `provider` is
   one of `apify`, `manual_import`, `official_api`, `licensed_feed`; `source_type` is one of
   `community_feed`, `manual_json`, `webhook`.
@@ -250,9 +250,11 @@ Body: `{ "lead_id": "uuid", "comment_id": "uuid|null", "kind": "reply|dm|meeting
 
 - `GET /api/v1/providers/apify/actors` → paginated `Actor` `{ id, provider, actor_id, name,
   description, source_type, enabled, validation_status, max_items_per_run, cost_per_run_estimate,
-  input_template: object, last_success_at, created_at }`.
+  max_total_charge_usd, input_template: object, last_success_at, created_at }`.
 - `POST /api/v1/providers/apify/actors` — `{ actor_id, name, description?, source_type,
-  input_template?, max_items_per_run?, max_run_cost_eur? }` → `201`. Never guesses an Actor ID:
+  input_template?, max_items_per_run?, max_run_cost_eur?, max_total_charge_usd? }` → `201`.
+  `max_total_charge_usd` is the provider-side per-run cap forwarded as Apify `maxTotalChargeUsd`
+  (defaults to `APIFY_MAX_TOTAL_CHARGE_USD`). Never guesses an Actor ID:
   it is stored exactly as supplied. New Actors are stored `enabled=false`,
   `validation_status="pending"`.
 - `PATCH /api/v1/providers/apify/actors/:id` — `{ validation_status?: "pending"|"validated"|
@@ -278,9 +280,13 @@ Body: `{ "lead_id": "uuid", "comment_id": "uuid|null", "kind": "reply|dm|meeting
 
 ## AI providers
 
+`stale` is true when the last recorded outcome is a failure older than 24 hours: history, not a current
+outage.
+
 - `GET /api/v1/providers` → `ProviderStatus[]` (not paginated)
   `{ provider: "jev"|"laya"|"qwen"|"apify", kind: "decision"|"generative"|"source", configured,
-  enabled, model, status, last_request_at, last_latency_ms, last_error,
+  enabled, model, status, last_request_at, last_latency_ms, last_error, last_success_at,
+  last_error_at, stale,
   usage: { requests, input_tokens, output_tokens } }`.
 - `POST /api/v1/providers/:provider/test` → `{ provider, status, latency_ms, message }`.
   `:provider` ∈ `jev|laya|qwen|apify`. This performs a real, possibly billable probe; dashboards never

@@ -44,6 +44,22 @@ channel`, `language|lang`, `published_at|createdAt|created_at|date|timestamp`, a
 `engagement.*` or `num_comments`/`score`. Items without a body are skipped. Actors that need a different
 shape require a dedicated adapter; do not stretch the mapping.
 
+## Sources versus Actors
+
+Two records exist and they do different jobs:
+
+- `actor_registry` drives collection. A run starts from an Actor that is enabled **and** validated;
+  its `input_template` is the documented input for that Actor.
+- `sources` records provenance and validation. Dataset items are attributed to the `apify-default`
+  source, and a source must be validated (with evidence) before it can be enabled. Enabling a source
+  never starts collection.
+
+## URL of an ingested item
+
+The generic mapping resolves relative permalinks (`/r/…`) against `https://www.reddit.com` when the item
+also identifies a subreddit/community, keeps absolute URLs untouched, and stores nothing rather than
+guessing a host for an unknown provider.
+
 ## Spending controls
 
 Every run passes `sources::guard_apify_run` before it is queued:
@@ -55,6 +71,10 @@ Every run passes `sources::guard_apify_run` before it is queued:
 5. the Actor's configured estimate is not above `APIFY_MAX_RUN_COST`;
 6. total spend is below `APIFY_TOTAL_BUDGET` and today's spend below `APIFY_DAILY_BUDGET`;
 7. fewer than `APIFY_MAX_CONCURRENT_RUNS` runs are queued or running.
+
+Every run also carries `maxTotalChargeUsd` (the Actor's `max_total_charge_usd`, default
+`APIFY_MAX_TOTAL_CHARGE_USD`), a cap Apify enforces itself: a pay-per-event Actor cannot bill beyond it.
+That cap is in USD and is never converted from the EUR ceilings.
 
 Refusals answer `409 cost_guard_rejected` with `details.reason` in `kill_switch`, `budget_exhausted`,
 `daily_ceiling_reached`, `concurrency_limit`, `actor_not_enabled`, `actor_not_validated`,

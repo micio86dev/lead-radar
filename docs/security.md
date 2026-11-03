@@ -25,6 +25,21 @@
 - SQL is always parameterised; the only dynamic SQL is a generated list of bound placeholders for
   whitelisted job kinds and filter clauses.
 
+## Frontend action endpoint
+
+`/api/action` is the only server route the browser posts to, and it accepts one allow-listed operation
+per request with the server-side token. Astro's blanket `security.checkOrigin` is disabled because it
+also rejects non-browser clients; the route enforces its own policy instead:
+
+- `Sec-Fetch-Site: cross-site` is refused (`403`).
+- When an `Origin` header is present it must match the host the app answered on, or an origin listed in
+  `LEAD_RADAR_ALLOWED_ORIGINS` (`403` otherwise).
+- Clients that send no `Origin` (curl, scripts, tests) are accepted and get JSON answers; dashboard forms
+  always send a `redirect` and get a `303` back to the page.
+
+Unsupported content types answer `415`, unknown operations `400`, and backend failures are relayed as
+JSON with the API's status code.
+
 ## External data
 
 - Collected content is untrusted input. It is stored with provenance (`source_id`, `discovered_at`,
