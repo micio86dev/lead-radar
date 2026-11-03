@@ -5,8 +5,8 @@ COMPOSE := docker compose
 COMPOSE_TEST := docker compose -f docker-compose.test.yml
 PY := python3
 
-.PHONY: help up down logs ps build migrate seed reset-db test test-backend test-frontend test-e2e \
-        lint fmt dev-api dev-worker dev-frontend check-env
+.PHONY: help up down logs ps build migrate seed rescore reset-db test test-backend test-frontend \
+        test-e2e lint fmt dev-api dev-worker dev-frontend check-env
 
 help:
 	@echo "Lead Radar targets:"
@@ -15,6 +15,7 @@ help:
 	@echo "  make logs          follow logs"
 	@echo "  make migrate       run database migrations"
 	@echo "  make seed          run idempotent seeds"
+	@echo "  make rescore       recompute scores/qualification from stored decisions (no AI spend)"
 	@echo "  make reset-db      DESTRUCTIVE: delete the SQLite volume"
 	@echo "  make test          backend + frontend tests"
 	@echo "  make test-backend  cargo test + clippy"
@@ -50,6 +51,9 @@ migrate: check-env
 
 seed: check-env
 	$(COMPOSE) run --rm api /usr/local/bin/db seed
+
+rescore: check-env
+	$(COMPOSE) run --rm api /usr/local/bin/db rescore
 
 reset-db:
 	@echo "This deletes the Lead Radar SQLite volume. Ctrl-C to abort."

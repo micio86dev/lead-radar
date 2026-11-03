@@ -18,6 +18,24 @@ writes at a time by design; the writer pool has a single connection.
 - `GET /ready` — database reachable; `503` otherwise.
 - Container healthchecks use both (`docker-compose.yml`).
 
+## Re-scoring after a configuration change
+
+Weights and vertical thresholds are versioned configuration (`lead_score_versions`). Changing them does
+not require paying for the same analysis twice:
+
+```bash
+make rescore
+# or: docker compose run --rm api /usr/local/bin/db rescore
+```
+
+It re-reads each active lead's latest successful decision (relevance, evidence sufficiency, ambiguity),
+its stored classification, publication time and engagement, recomputes the deterministic score with the
+**active** configuration, updates the lead and appends a `lead_scores` row recording the new version.
+No provider is called. Output is a JSON summary (`examined`, `updated`, `skipped`, `version`).
+
+Observed on the real dataset: scoring version 3 (support and hospitality thresholds at 60) examined 184
+leads and changed 41 scores/qualifications at zero cost.
+
 ## Jobs
 
 `POST /api/v1/jobs/:id/retry` requeues a `failed` or `dead_letter` job. `GET /api/v1/jobs?status=…`

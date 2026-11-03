@@ -44,6 +44,18 @@ channel`, `language|lang`, `published_at|createdAt|created_at|date|timestamp`, a
 `engagement.*` or `num_comments`/`score`. Items without a body are skipped. Actors that need a different
 shape require a dedicated adapter; do not stretch the mapping.
 
+## Targeted sweep script
+
+`scripts/apify-community-sweep.py` drives the whole loop over approved communities: one run per
+community with `withinCommunity` and quoted phrases per vertical, polling until terminal, then waiting
+for ingestion and decisions and printing the scoreboard. `--only`/`--skip` select communities, `--items`
+bounds the dataset, and every run carries the actor's charge cap. The bearer token comes from `.env` and
+is never printed.
+
+```bash
+./scripts/apify-community-sweep.py --only CrossLanguageCalls,eventprofs --extra-terms '"Wordly"'
+```
+
 ## Sources versus Actors
 
 Two records exist and they do different jobs:

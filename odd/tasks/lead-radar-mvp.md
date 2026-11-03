@@ -192,3 +192,6 @@ L18. Community sweep completed: 25 targeted searches (25/25 succeeded), 495 item
      Translation Apps and AI?" (73 warm) with three Qwen drafts pending review. Eight enabled communities
      returned zero items for the quoted phrases; recorded as a search-precision observation, not a defect.
 L19. APIFY_DAILY_CHARGE_USD restored to 1.00 after the sweep (it was raised to 3.00 to finish it).
+L20. Scoring v3 (support/hospitality thresholds 60) plus `db rescore`: leads re-evaluated from stored
+     decisions, 41 changed, zero provider spend. Seed vocabulary now carries 96 keywords (spec lists plus
+     the variants observed in real posts). Reusable sweep script committed.
