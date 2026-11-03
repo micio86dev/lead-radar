@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [feature/lead-radar-mvp, main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend (rust 1.89.0)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: lead-radar-backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Toolchain
+        run: |
+          rustup toolchain install 1.89.0 --profile minimal --component rustfmt,clippy
+          rustup default 1.89.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: lead-radar-backend
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Tests
+        env:
+          APP_ENV: test
+          DECISION_PROVIDER: mock
+          GENERATIVE_PROVIDER: mock
+          SOURCE_PROVIDER: mock
+        run: cargo test --all-targets
+
+  frontend:
+    name: frontend (bun)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: lead-radar-frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Lint
+        run: bun run lint
+      - name: Unit tests
+        run: bun run test
+      - name: Build
+        run: bun run build

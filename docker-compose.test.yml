@@ -1,0 +1,23 @@
+name: lead-radar-test
+
+services:
+  backend-test:
+    build:
+      context: ./lead-radar-backend
+      dockerfile: Dockerfile.test
+    environment:
+      APP_ENV: test
+      DATABASE_URL: sqlite::memory:
+      DECISION_PROVIDER: mock
+      GENERATIVE_PROVIDER: mock
+      SOURCE_PROVIDER: mock
+    command: ["cargo", "test", "--all-targets", "--", "--test-threads=4"]
+
+  frontend-test:
+    build:
+      context: ./lead-radar-frontend
+      dockerfile: Dockerfile.test
+    environment:
+      PUBLIC_API_BASE_URL: http://api:8080
+      LEAD_RADAR_API_TOKEN: test-token
+    command: ["sh", "-lc", "bun run typecheck && bun run lint && bun run test"]

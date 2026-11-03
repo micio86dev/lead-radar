@@ -1,0 +1,86 @@
+SHELL := /bin/bash
+BACKEND := lead-radar-backend
+FRONTEND := lead-radar-frontend
+COMPOSE := docker compose
+COMPOSE_TEST := docker compose -f docker-compose.test.yml
+PY := python3
+
+.PHONY: help up down logs ps build migrate seed reset-db test test-backend test-frontend test-e2e \
+        lint fmt dev-api dev-worker dev-frontend check-env
+
+help:
+	@echo "Lead Radar targets:"
+	@echo "  make up            start api + worker + frontend (docker compose)"
+	@echo "  make down          stop the stack (keeps the data volume)"
+	@echo "  make logs          follow logs"
+	@echo "  make migrate       run database migrations"
+	@echo "  make seed          run idempotent seeds"
+	@echo "  make reset-db      DESTRUCTIVE: delete the SQLite volume"
+	@echo "  make test          backend + frontend tests"
+	@echo "  make test-backend  cargo test + clippy"
+	@echo "  make test-frontend bun typecheck + unit tests"
+	@echo "  make test-e2e      Playwright end-to-end"
+	@echo "  make lint          fmt check + clippy + prettier check + typecheck"
+	@echo "  make fmt           format backend and frontend"
+	@echo "  make dev-api       run the API locally (needs .env)"
+	@echo "  make dev-worker    run the worker locally (needs .env)"
+	@echo "  make dev-frontend  run the Astro dev server"
+
+check-env:
+	@test -f .env || (echo "missing .env: cp .env.example .env" && exit 1)
+
+up: check-env
+	$(COMPOSE) up --build -d
+	@echo "frontend: http://localhost:$${FRONTEND_PORT:-4321}  api: http://localhost:$${APP_PORT:-8080}"
+
+down:
+	$(COMPOSE) down
+
+logs:
+	$(COMPOSE) logs -f --tail=200
+
+ps:
+	$(COMPOSE) ps
+
+build:
+	$(COMPOSE) build
+
+migrate: check-env
+	$(COMPOSE) run --rm api /usr/local/bin/db migrate
+
+seed: check-env
+	$(COMPOSE) run --rm api /usr/local/bin/db seed
+
+reset-db:
+	@echo "This deletes the Lead Radar SQLite volume. Ctrl-C to abort."
+	@sleep 3
+	$(COMPOSE) down -v
+	@echo "data volume removed"
+
+test: test-backend test-frontend
+
+test-backend:
+	cd $(BACKEND) && cargo test --all-targets
+
+test-frontend:
+	cd $(FRONTEND) && bun run typecheck && bun run lint && bun run test
+
+test-e2e:
+	cd $(FRONTEND) && bun run test:e2e
+
+lint:
+	cd $(BACKEND) && cargo fmt --all -- --check && cargo clippy --all-targets -- -D warnings
+	cd $(FRONTEND) && bun run typecheck && bun run lint
+
+fmt:
+	cd $(BACKEND) && cargo fmt --all
+	cd $(FRONTEND) && bun run format
+
+dev-api: check-env
+	cd $(BACKEND) && cargo run --bin api
+
+dev-worker: check-env
+	cd $(BACKEND) && cargo run --bin worker
+
+dev-frontend:
+	cd $(FRONTEND) && bun run dev

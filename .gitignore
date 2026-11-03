@@ -1,0 +1,16 @@
+# env
+.env
+.env.local
+*.env
+!.env.example
+
+# databases / volumes
+*.db
+*.db-shm
+*.db-wal
+data/
+
+# tooling
+.DS_Store
+node_modules/
+*.log
