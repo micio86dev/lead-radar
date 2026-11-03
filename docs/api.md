@@ -299,6 +299,10 @@ outage.
 - `GET /api/v1/providers/decisions` — query `provider`, `page`, `per_page`; `DecisionSummary`
   `{ id, lead_id, provider, model, model_version, confidence, intent, vertical, latency_ms,
   created_at }`.
+- `POST /api/v1/providers/benchmark/dataset` — `{ dataset, items: [{ external_ref, text, language,
+  expected_relevant, expected_intent, expected_vertical, split? }] }` → `{ dataset, stored }`. This is how
+  human ground truth enters the system: examples upsert on `(dataset, external_ref)`, `split` defaults to
+  `evaluation`, and only `evaluation` rows are scored, so tuning and evaluation cannot silently overlap.
 - `POST /api/v1/providers/benchmark` — `{ dataset: "seed"|"<dataset_id>", providers: ["jev","laya"] }`
   → `202 { job_id, benchmark_run_id }`. `jev` addresses the production decision role and `laya` the
   benchmark role; each stored result names the adapter that actually answered (for example `mock`
