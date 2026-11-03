@@ -156,3 +156,13 @@ L5. Frontend delegated to a bounded writer against docs/api.md; backend implemen
     Frontend owns `lead-radar-frontend/**` only.
 L6. No external credentials exist, so real-provider calls are reported as untested against live
     services; adapters are covered by wiremock contract tests and mock providers drive the pipeline.
+L7. Bounded-writer delegation for the frontend failed twice (agent error, no files written). The
+    dashboard was implemented inline against docs/api.md; delegation is reported as unavailable.
+L8. Work-unit commits: backend implementation (one slice), backend Actor patch endpoint, frontend
+    dashboard, root scaffolding + submodule revisions. The slice boundary is recorded here as the
+    harness requires; the feature branch is local and nothing is pushed.
+L9. Verified: 96 library tests, 17 API integration tests, clippy -D warnings, cargo fmt check,
+    frontend `astro check`, `vue-tsc`, prettier, 10 Vitest tests, `astro build`, and 3 Playwright
+    end-to-end tests against a real local stack (SQLite + api + worker + SSR frontend).
+L10. No provider credential exists in this environment: live Apify/Jev/Laya/Qwen calls are reported
+    as unverified in docs/status.md, with contract tests covering the documented shapes.

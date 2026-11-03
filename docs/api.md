@@ -228,9 +228,9 @@ Body: `{ "lead_id": "uuid", "comment_id": "uuid|null", "kind": "reply|dm|meeting
 
 - `GET /api/v1/communities` — query `vertical`, `validation_status`; `Community`
   `{ id, name, vertical, validation_status, enabled, notes, last_checked_at, created_at }`.
-- `PATCH /api/v1/communities/:id` — `{ validation_status?, enabled?, notes? }`. Enabling a community
-  whose `validation_status != "validated"` is `409 conflict` with `details.reason =
-  "community_not_validated"`.
+- `PATCH /api/v1/communities/:id` — `{ enabled?, notes? }`. Enabling a community whose
+  `validation_status != "validated"` answers `409 conflict` with a `message` starting
+  `community_not_validated:`.
 - `POST /api/v1/communities/:id/validate` — `{ "outcome": "validated"|"rejected",
   "evidence": "what was verified and where", "notes?": "..." }`. Requires a non-empty `evidence`
   (422 otherwise). Records an audit log entry and returns the community.
@@ -249,26 +249,32 @@ Body: `{ "lead_id": "uuid", "comment_id": "uuid|null", "kind": "reply|dm|meeting
 ## Apify
 
 - `GET /api/v1/providers/apify/actors` → paginated `Actor` `{ id, provider, actor_id, name,
-  description, source_type, enabled, validation_status, max_items_per_run, max_run_cost_eur,
+  description, source_type, enabled, validation_status, max_items_per_run, cost_per_run_estimate,
   input_template: object, last_success_at, created_at }`.
 - `POST /api/v1/providers/apify/actors` — `{ actor_id, name, description?, source_type,
   input_template?, max_items_per_run?, max_run_cost_eur? }` → `201`. Never guesses an Actor ID:
   it is stored exactly as supplied. New Actors are stored `enabled=false`,
   `validation_status="pending"`.
+- `PATCH /api/v1/providers/apify/actors/:id` — `{ validation_status?: "pending"|"validated"|
+  "rejected", enabled?: bool, description?, max_items_per_run?, input_template? }`. Enabling an Actor
+  whose effective `validation_status` is not `validated` answers `409 conflict` with
+  `message` starting `actor_not_validated:`. Returns the Actor.
 - `POST /api/v1/providers/apify/runs` — `{ "actor_registry_id": "uuid", "input_override": {},
   "items_limit": 25 }` → `202 { "job_id", "run_id", "status": "queued" }` or
   `409 cost_guard_rejected` with `details.reason` in `kill_switch`, `budget_exhausted`,
   `daily_ceiling_reached`, `concurrency_limit`, `actor_not_enabled`, `actor_not_validated`,
   `run_cost_above_limit`, `provider_unconfigured`.
 - `GET /api/v1/providers/apify/runs` — query `status`, `actor_registry_id`; `ApifyRun`
-  `{ id, actor_registry_id, actor_name, status, items_count, cost_estimate_eur, cost_actual_eur,
-  started_at, finished_at, error }`.
+  `{ id, actor_registry_id, actor_name, status, items_count, dataset_id, cost_estimate_usd,
+  cost_actual_usd, started_at, finished_at, error, job_id, created_at }`. Apify reports spend in USD;
+  the configured ceilings are EUR and are never converted.
 - `GET /api/v1/providers/apify/runs/:id` — `ApifyRun` + `{ "job_id": "uuid|null" }`.
-- `POST /api/v1/providers/apify/runs/:id/cancel` → `202 { "status": "aborting" }`.
+- `POST /api/v1/providers/apify/runs/:id/cancel` → `202 { "status": "aborted" }`; a finished run
+  answers `409 conflict`.
 - `GET /api/v1/providers/apify/usage` → `{ budget_eur, daily_budget_eur, max_run_cost_eur,
-  max_concurrent_runs, max_items_per_run, known_actual_eur, estimated_eur, remaining_known_eur,
+  max_concurrent_runs, max_items_per_run, known_actual_usd, estimated_usd, remaining_known_eur,
   runs_total, runs_running, results_total, errors_total, kill_switch,
-  cost_source: "actual"|"estimate"|"unknown" }`.
+  cost_source: "actual"|"estimate"|"unknown", currency_note }`.
 
 ## AI providers
 
@@ -277,17 +283,20 @@ Body: `{ "lead_id": "uuid", "comment_id": "uuid|null", "kind": "reply|dm|meeting
   enabled, model, status, last_request_at, last_latency_ms, last_error,
   usage: { requests, input_tokens, output_tokens } }`.
 - `POST /api/v1/providers/:provider/test` → `{ provider, status, latency_ms, message }`.
-  `:provider` ∈ `jev|laya|qwen|apify`.
+  `:provider` ∈ `jev|laya|qwen|apify`. This performs a real, possibly billable probe; dashboards never
+  call it, they read recorded usage instead.
 - `GET /api/v1/providers/usage` → `ProviderCost[]`
   `{ provider, requests, input_tokens, output_tokens, actual_cost_usd, estimated_cost_usd,
   unknown_cost_requests, currency: "USD", period: { from, to } }`.
 - `GET /api/v1/providers/decisions` — query `provider`, `page`, `per_page`; `DecisionSummary`
   `{ id, lead_id, provider, model, model_version, confidence, intent, vertical, latency_ms,
   created_at }`.
-- `POST /api/v1/providers/benchmark` — `{ dataset: "seed"|"<dataset_id>", providers: ["jev","laya"],
-  limit?: 50 }` → `202 { job_id, benchmark_run_id }`.
+- `POST /api/v1/providers/benchmark` — `{ dataset: "seed"|"<dataset_id>", providers: ["jev","laya"] }`
+  → `202 { job_id, benchmark_run_id }`. `jev` addresses the production decision role and `laya` the
+  benchmark role; each stored result names the adapter that actually answered (for example `mock`
+  when `DECISION_PROVIDER=mock`).
 - `GET /api/v1/providers/benchmark` → paginated `BenchmarkRunSummary`
-  `{ id, dataset, status, providers, created_at, finished_at }`.
+  `{ id, dataset, status, providers, item_count, error, created_at, finished_at }`.
 - `GET /api/v1/providers/benchmark/:id` → `BenchmarkRunDetail` = summary + `results:
   [{ provider, model, model_version, metrics: { precision, recall, f1, accuracy,
   false_positive_rate, false_negative_rate, confusion_matrix: { tp, fp, tn, fn },
@@ -309,7 +318,7 @@ Body:
 ```
 
 `202` — `{ "ingestion_run_id": "uuid", "imported": 10, "duplicates": 2, "rejected": 1,
-"job_ids": ["uuid"] }`. Duplicates are detected by `external_id` and by `content_hash`; re-importing
+"rejected_reasons": ["content must not be empty"], "job_ids": ["uuid"] }`. Duplicates are detected by `external_id` and by `content_hash`; re-importing
 the same payload never creates a second active lead.
 
 ## Settings and operations
@@ -318,9 +327,12 @@ the same payload never creates a second active lead.
   ai_concurrency, job_max_attempts, retention_days }, budgets: { apify_total_eur,
   apify_daily_eur, apify_max_run_eur, apify_max_items_per_run, apify_max_concurrent_runs,
   kill_switch }, providers: ProviderStatus[] }`.
-- `PATCH /api/v1/settings` — subset of `{ retention_days, budgets: { apify_daily_eur,
-  apify_max_run_eur, apify_max_items_per_run }, providers: { jev_enabled, laya_enabled,
-  qwen_enabled } }`.
+- `PATCH /api/v1/settings` — subset of `{ retention_days, budgets: { apify_total_budget_eur,
+  apify_daily_budget_eur, apify_max_run_cost_eur, apify_max_items_per_run,
+  apify_max_concurrent_runs, kill_switch }, providers: { jev_enabled, qwen_enabled } }`. Budget
+  overrides are validated and can only tighten the environment ceilings; the spend guard reads them.
+  `jev_enabled=false` or `qwen_enabled=false` makes the decision or generative call fail loudly instead
+  of silently continuing.
 - `GET /api/v1/jobs` — query `status`, `kind`; `Job` `{ id, kind, status, attempts, max_attempts,
   run_at, last_error, created_at, updated_at }`.
 - `POST /api/v1/jobs/:id/retry` — `202 { "job_id": "uuid", "status": "queued" }` for `failed` and

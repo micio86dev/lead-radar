@@ -1,0 +1,71 @@
+# Apify integration
+
+Implementation: `lead-radar-backend/src/providers/apify.rs` over the documented Apify REST API
+(`https://docs.apify.com/api`). The token is sent only in an `Authorization: Bearer` header.
+
+## Calls used
+
+| Purpose | Request |
+|---|---|
+| Start a run | `POST {APIFY_BASE_URL}/v2/acts/{actor_id}/runs` with `{ input, maxItems }` |
+| Run status | `GET {APIFY_BASE_URL}/v2/actor-runs/{run_id}` |
+| Dataset items | `GET {APIFY_BASE_URL}/v2/datasets/{dataset_id}/items?format=json&clean=true&offset=…&limit=…` |
+| Cancel | `POST {APIFY_BASE_URL}/v2/actor-runs/{run_id}/abort` |
+| Health | `GET {APIFY_BASE_URL}/v2/users/me` |
+
+Run status is mapped to `queued` (`READY`), `running` (`RUNNING`/`ABORTING`/`TIMING-OUT`), `succeeded`,
+`failed`, `aborted`, `timed_out`. Provider-reported `usageTotalUsd` is stored as the actual run cost in
+USD.
+
+## Asynchronous lifecycle
+
+`POST /api/v1/providers/apify/runs` (or a `discovery` job) creates an `apify_runs` row and an
+`actor_run` job. The worker starts the run once, then requeues itself with the configured poll interval
+until the run is terminal; on success it enqueues `dataset_ingestion`, which pages through the dataset
+(100 items per page), maps each item with the documented generic mapping and imports it through the same
+deduplicating path as manual JSON. A page that is full requeues the job with the next offset. No request
+blocks on the Actor and no transaction is held.
+
+## Actor registry
+
+`actor_registry` rows are operator configuration: `actor_id`, name, source type, input template, max
+items per run and an optional cost estimate. New Actors are stored `enabled = false` and
+`validation_status = "pending"`. `PATCH /api/v1/providers/apify/actors/:id` records validation and
+enables the Actor; enabling an unvalidated Actor is refused.
+
+**No Actor id, input schema or price is invented by the codebase.** The seed creates no Actor: the
+operator registers the one they verified.
+
+## Generic dataset mapping
+
+`map_dataset_item` reads only documented aliases: `content|text|body|selftext|description` for the
+body, `title|headline`, `url|permalink|link`, `author|username|user`, `community|subreddit|forum|
+channel`, `language|lang`, `published_at|createdAt|created_at|date|timestamp`, and engagement from
+`engagement.*` or `num_comments`/`score`. Items without a body are skipped. Actors that need a different
+shape require a dedicated adapter; do not stretch the mapping.
+
+## Spending controls
+
+Every run passes `sources::guard_apify_run` before it is queued:
+
+1. the configured source adapter is available (credentials when `SOURCE_PROVIDER=apify`);
+2. the kill switch is off;
+3. the Actor is enabled **and** validated;
+4. `items_limit` is within `1..=min(actor.max_items_per_run, APIFY_MAX_ITEMS_PER_RUN)`;
+5. the Actor's configured estimate is not above `APIFY_MAX_RUN_COST`;
+6. total spend is below `APIFY_TOTAL_BUDGET` and today's spend below `APIFY_DAILY_BUDGET`;
+7. fewer than `APIFY_MAX_CONCURRENT_RUNS` runs are queued or running.
+
+Refusals answer `409 cost_guard_rejected` with `details.reason` in `kill_switch`, `budget_exhausted`,
+`daily_ceiling_reached`, `concurrency_limit`, `actor_not_enabled`, `actor_not_validated`,
+`run_cost_above_limit`, `limit_invalid`, `provider_unconfigured`.
+
+Currencies are never converted: ceilings are EUR (the promotional budget), Apify reports USD, and both
+are shown separately. When spend in USD exists, `remaining_known_eur` is `null` instead of a fabricated
+conversion.
+
+## What is not implemented
+
+- Webhook-based completion (the worker polls, which survives restarts).
+- Provider usage/billing endpoints beyond what a run reports; balances are never displayed as facts.
+- Automatic Actor validation: it is a human decision recorded through the API.
