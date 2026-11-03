@@ -39,6 +39,7 @@ Credentials were configured later by the operator; the following probes were run
 | Qwen generation | **verified live** (DashScope International, `qwen-plus`): `/v1/models` 200, minimal probe `ok` (1074 ms), 3/3 English variants stored, 3/3 Spanish variants stored with `Aviso: trabajo en VoxTranslate.`, no corrective pass needed |
 | Jev decisions | **verified live** (TypeSafe deployment, `api.typesafe.ai/v1/systemone`, `jev-1.14.0`): real label distributions, 1546/590 tokens, 307 ms latency; the full pipeline produced a lead (score 79, `needs_review`) and Qwen drafted 3/3 comments |
 | Laya decisions | adapter implemented; disabled by default, no key configured |
+| Apify Reddit ingestion (live) | **executed**: runs, dataset items, the recorded spend provider-reported spend, 9 real Reddit leads created (all `rejected` by qualification: the posts are not language-barrier buying signals). Dataset re-ingestion, provenance backfill and community/URL mapping verified on real payloads |
 | Reddit / community validation | 17 of the 24 seeded communities were relevance-reviewed and enabled with evidence recorded through the API (HR, international work, events/AV, support, hospitality); 7 were excluded with a note (IT operations, broadcast engineering, generic sales/SaaS, travel agents, smallbusiness). Reddit terms and per-subreddit rules remain the operator's responsibility |
 
 ### Defect found and fixed by the live verification

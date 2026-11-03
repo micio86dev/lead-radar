@@ -54,6 +54,14 @@ Two records exist and they do different jobs:
   source, and a source must be validated (with evidence) before it can be enabled. Enabling a source
   never starts collection.
 
+## Re-processing a collected dataset
+
+`POST /api/v1/providers/apify/runs/:id/reingest` re-queues ingestion for a run that already produced a
+dataset (the dashboard shows a **Re-ingest** button). Apify is not called and nothing is billed: the
+stored dataset is read again, duplicates backfill missing metadata (community, URL, author, engagement),
+and posts are re-evaluated against the current keyword configuration. Posts already decided keep their
+decision (the decision job is idempotent per post content), so only newly matching posts cost a decision.
+
 ## URL of an ingested item
 
 The generic mapping resolves relative permalinks (`/r/…`) against `https://www.reddit.com` when the item
@@ -71,6 +79,10 @@ Every run passes `sources::guard_apify_run` before it is queued:
 5. the Actor's configured estimate is not above `APIFY_MAX_RUN_COST`;
 6. total spend is below `APIFY_TOTAL_BUDGET` and today's spend below `APIFY_DAILY_BUDGET`;
 7. fewer than `APIFY_MAX_CONCURRENT_RUNS` runs are queued or running.
+
+A second, separate ceiling bounds provider-reported USD spend per day (`APIFY_DAILY_CHARGE_USD`, default
+1.00 USD). The EUR ceilings and the Apify USD ledger are never converted into each other: the guard
+refuses a run when `today's USD spend >= APIFY_DAILY_CHARGE_USD`, independently of the EUR budget.
 
 Every run also carries `maxTotalChargeUsd` (the Actor's `max_total_charge_usd`, default
 `APIFY_MAX_TOTAL_CHARGE_USD`), a cap Apify enforces itself: a pay-per-event Actor cannot bill beyond it.
