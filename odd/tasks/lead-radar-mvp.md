@@ -195,3 +195,8 @@ L19. APIFY_DAILY_CHARGE_USD restored to 1.00 after the sweep (it was raised to 3
 L20. Scoring v3 (support/hospitality thresholds 60) plus `db rescore`: leads re-evaluated from stored
      decisions, 41 changed, zero provider spend. Seed vocabulary now carries 96 keywords (spec lists plus
      the variants observed in real posts). Reusable sweep script committed.
+L21. Second sweep over the 8 zero-item communities with extra phrases: customersuccess 10 items, AskHR 12,
+     Recruiter 1, others 0; 2 new leads (186 total). Live benchmark path verified end to end: labeled
+     dataset ingestion (2 examples) -> run -> real Jev metrics, the measured latency average latency.
+L22. All work committed on feature/lead-radar-mvp in the three local repositories; nothing pushed.
+     APIFY_DAILY_CHARGE_USD back to 1.00; monthly Apify the configured credit.
