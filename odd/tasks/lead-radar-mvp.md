@@ -187,3 +187,8 @@ L16. Communities: 12 new candidates added after web research (36 total, 29 enabl
      25 remaining enabled communities (quoted phrases, 10 items, USD cap per run).
 L17. Official Reddit API: verified that new public API access closed on 2026-10-31 and ends March 2027;
      guide and a credential diagnostic script added (docs/reddit-official-api.md, scripts/reddit-token-check.sh).
+L18. Community sweep completed: 25 targeted searches (25/25 succeeded), 495 items, the recorded spend total Apify
+     spend (the configured credit), opportunities. First qualified lead: r/EventProduction "Live
+     Translation Apps and AI?" (73 warm) with three Qwen drafts pending review. Eight enabled communities
+     returned zero items for the quoted phrases; recorded as a search-precision observation, not a defect.
+L19. APIFY_DAILY_CHARGE_USD restored to 1.00 after the sweep (it was raised to 3.00 to finish it).
