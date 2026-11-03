@@ -15,6 +15,11 @@ Record the outcome through the API; it is stored with evidence and an audit entr
 5. **Privacy and retention** — is personal data minimized, and is the retention window acceptable?
 6. **Engagement rules** — does the community allow promotional replies, and what disclosure is required?
 
+New candidates are added with `POST /api/v1/communities` (always `pending`, disabled) after a relevance
+review; the research source and the on-topic threads are recorded in `notes`, and the evidence states
+what was and was not verified (for example: Reddit's public JSON answers `403` to unauthenticated
+requests from this host, so subscriber counts were not re-verified).
+
 `POST /api/v1/communities/:id/validate` requires `evidence` and records `validated` or `rejected`.
 Enabling a community whose status is not `validated` is refused with `409 conflict`. Communities are
 seeded as `pending` and disabled: a seed never asserts permission.

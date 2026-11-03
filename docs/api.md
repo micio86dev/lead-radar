@@ -228,6 +228,8 @@ Body: `{ "lead_id": "uuid", "comment_id": "uuid|null", "kind": "reply|dm|meeting
 
 - `GET /api/v1/communities` — query `vertical`, `validation_status`; `Community`
   `{ id, name, vertical, validation_status, enabled, notes, last_checked_at, created_at }`.
+- `POST /api/v1/communities` — `{ name, vertical, notes? }` → `201`. New candidates are always created
+  `pending` and disabled; a duplicate name answers `409 conflict`.
 - `PATCH /api/v1/communities/:id` — `{ enabled?, notes? }`. Enabling a community whose
   `validation_status != "validated"` answers `409 conflict` with a `message` starting
   `community_not_validated:`.
