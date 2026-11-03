@@ -25,17 +25,25 @@ Last updated from observed runs on this machine. Nothing here is aspirational.
 | Docker images and Compose startup | verified | `docker build` for both images; `docker compose up -d` → api/worker/frontend healthy; `/health` and `/ready` 200 |
 | Containerized import with unconfigured providers | verified behaviour | import stored the post, the decision job failed `dead_letter` with `provider jev is not configured`, no lead was invented |
 
-## Not verified against live services
+## Verified against live services
 
-No `APIFY_API_TOKEN`, `JEV_API_KEY`, `LAYA_API_KEY` or `QWEN_*` credential existed in this environment.
+Credentials were configured later by the operator; the following probes were run from this workspace.
 
 | Integration | State |
 |---|---|
-| Apify Actor run, dataset paging, cancel | adapter implemented and contract-tested; **no live run executed** |
-| Jev decisions | adapter implemented against documented shapes; **no live call** |
-| Laya decisions | adapter implemented; **no live call**; disabled by default |
-| Qwen generation | adapter implemented; **no live call** |
+| Apify credentials | **verified live**: `GET /v2/users/me` answered 200 (510 ms) |
+| Apify Actor run, dataset paging, cancel | adapter implemented and contract-tested; **no live run executed** (no Actor registered yet) |
+| Qwen generation | **verified live** (DashScope International, `qwen-plus`): `/v1/models` 200, minimal probe `ok` (1074 ms), 3/3 English variants stored, 3/3 Spanish variants stored with `Aviso: trabajo en VoxTranslate.`, no corrective pass needed |
+| Jev decisions | adapter implemented against documented shapes; **live probe rejected the configured key**: `401 invalid_api_key` (`reason: unknown_key`); blocked on a valid key |
+| Laya decisions | adapter implemented; disabled by default, no key configured |
 | Reddit / community validation | workflow implemented; **validation is an operator decision and was not performed** |
+
+### Observed product limitation
+
+The seeded keyword lists are English (as specified). A post written only in another language is
+filtered out before any paid call unless its vertical profile has keywords in that language. Adding
+Spanish keywords through `PATCH /api/v1/search-profiles/:id` made the Spanish post pass the filter and
+reach the decision stage; language-aware keyword coverage is an operator configuration task.
 
 ## Blocked or intentionally out of scope
 
