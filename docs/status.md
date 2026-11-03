@@ -34,9 +34,17 @@ Credentials were configured later by the operator; the following probes were run
 | Apify credentials | **verified live**: `GET /v2/users/me` answered 200 (510 ms) |
 | Apify Actor run, dataset paging, cancel | adapter implemented and contract-tested; **no live run executed** (no Actor registered yet) |
 | Qwen generation | **verified live** (DashScope International, `qwen-plus`): `/v1/models` 200, minimal probe `ok` (1074 ms), 3/3 English variants stored, 3/3 Spanish variants stored with `Aviso: trabajo en VoxTranslate.`, no corrective pass needed |
-| Jev decisions | adapter implemented against documented shapes; **live probe rejected the configured key**: `401 invalid_api_key` (`reason: unknown_key`); blocked on a valid key |
+| Jev decisions | **verified live** (TypeSafe deployment, `api.typesafe.ai/v1/systemone`, `jev-1.14.0`): real label distributions, 1546/590 tokens, 307 ms latency; the full pipeline produced a lead (score 79, `needs_review`) and Qwen drafted 3/3 comments |
 | Laya decisions | adapter implemented; disabled by default, no key configured |
 | Reddit / community validation | workflow implemented; **validation is an operator decision and was not performed** |
+
+### Defect found and fixed by the live verification
+
+The first live Jev run stored the literal label `Choice` for every choice answer. Cause: `QuestionCriteria`
+serialized as `{"Choice": {...}}` because serde's default newtype representation wraps the variant; the
+provider answered the only label it saw. Fixed with `#[serde(untagged)]` plus regression tests on the
+domain type and on the adapter's request body. Mock providers and the mocked wire test had not exposed
+it because neither inspects the criteria envelope.
 
 ### Observed product limitation
 

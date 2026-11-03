@@ -3,6 +3,20 @@
 Verified against `https://jev-ai.org/docs/decisions/` and `https://jev-ai.org/docs/question-types/`.
 Implementation: `lead-radar-backend/src/providers/remote.rs` (`JevCompatibleProvider`).
 
+## Deployments
+
+Two documented deployments speak this protocol and use different key families. The adapter only needs
+the base URL, the path and the model, so both are configuration:
+
+| Deployment | Key prefix | `JEV_BASE_URL` | `JEV_API_PATH` | Models |
+|---|---|---|---|---|
+| jev-ai.org (Jev site) | `sk-glm5-` | `https://jev-ai.org` | `/api/v1/systemone/` | `jev-1.13` |
+| api.typesafe.ai (TypeSafe console) | `apikey_` | `https://api.typesafe.ai` | `/v1/systemone` | `jev-latest` (resolves to `jev-1.14.0`), `jev-1.14.0` |
+
+A key from one deployment is rejected by the other (`401 invalid_api_key`, `reason: unknown_key`), and
+model ids are not interchangeable: `jev-1.13` answers `400 Unknown model` on api.typesafe.ai. Pin a
+resolved snapshot (`jev-1.14.0`) for reproducible evaluation instead of the rolling `jev-latest`.
+
 ## Request
 
 ```
@@ -21,7 +35,9 @@ Idempotency-Key: <decision run id>
 ```
 
 `choice` criteria are an object (label → boundary description); `score` criteria are an array ordered
-low to high. The typed `QuestionCriteria` enum makes the swap impossible. Limits enforced before the
+low to high. The typed `QuestionCriteria` enum makes the swap impossible, and it is marked
+`#[serde(untagged)]`: without that, serde wraps a newtype variant as `{"Choice": {...}}` and the
+provider reads it as a single label named `Choice`. A unit test pins both wire shapes. Limits enforced before the
 call: 1–20 questions, state ≤ 100 000 characters, instructions ≤ 1 000 characters, choice 2–24 labels,
 score 2–10 tiers.
 
