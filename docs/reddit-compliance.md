@@ -4,6 +4,13 @@ Lead Radar does not scrape Reddit directly and never bypasses authentication, ac
 CAPTCHAs, rate limits or platform protections. Acquisition happens through an authorized provider
 (Apify Actor) that the operator has verified, or through manual JSON imports.
 
+## Official API status
+
+Since 31 October 2026 Reddit no longer accepts new public Data API access requests, and remaining access
+ends in March 2027. If you already have an approved app, the exact calls and the diagnostics are in
+[`reddit-official-api.md`](reddit-official-api.md). The Apify route below records the operator's explicit
+compliance decision.
+
 ## Activation checklist (per community and per Actor)
 
 Record the outcome through the API; it is stored with evidence and an audit entry.

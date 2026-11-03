@@ -180,3 +180,10 @@ L14. UI work: import page, consistent vertical spacing scale, provider staleness
      an explicit origin policy replacing Astro's blanket CSRF rule. Communities: 17 enabled with recorded
      evidence, 7 excluded with a note. The Reddit Actor is registered disabled with a $0.10 provider-side
      cap pending the operator's compliance decision on unofficial scrapers.
+L15. Scoring v2 activated: weights 20/20/20/25/10/5 (product fit raised), conference threshold 60 → 50,
+     version 1 kept for audit. Real case re-scored: below the threshold then needs_review.
+L16. Communities: 12 new candidates added after web research (36 total, 29 enabled), each with notes and
+     evidence; POST /api/v1/communities added with a test. Targeted Apify search sweep launched over the
+     25 remaining enabled communities (quoted phrases, 10 items, USD cap per run).
+L17. Official Reddit API: verified that new public API access closed on 2026-10-31 and ends March 2027;
+     guide and a credential diagnostic script added (docs/reddit-official-api.md, scripts/reddit-token-check.sh).
