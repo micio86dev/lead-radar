@@ -1,8 +1,8 @@
 [submodule "lead-radar-backend"]
 	path = lead-radar-backend
 	url = https://github.com/micio86dev/lead-radar-backend.git
-	branch = feature/lead-radar-mvp
+	branch = main
 [submodule "lead-radar-frontend"]
 	path = lead-radar-frontend
 	url = https://github.com/micio86dev/lead-radar-frontend.git
-	branch = feature/lead-radar-mvp
+	branch = main

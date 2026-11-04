@@ -2,6 +2,11 @@
 
 Last updated from observed runs on this machine. Nothing here is aspirational.
 
+## Continuous integration
+
+The root repository runs GitHub Actions on every push (`backend`: fmt, clippy with `-D warnings`, tests;
+`frontend`: typecheck, prettier, tests, build). The first public run on `main` was green.
+
 ## Verified automatically
 
 | Area | State | Evidence |

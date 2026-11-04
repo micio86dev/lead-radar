@@ -1,5 +1,7 @@
 # Lead Radar
 
+[![CI](https://github.com/micio86dev/lead-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/micio86dev/lead-radar/actions/workflows/ci.yml)
+
 Multi-tenant B2B opportunity discovery: authorized public sources -> deterministic filtering ->
 typed AI decisions -> deterministic scoring -> human-reviewed engagement suggestions.
 
@@ -10,8 +12,8 @@ recorded by a human.
 
 | Path | Contents |
 |---|---|
-| `lead-radar-backend/` | Rust modular monolith (Axum API + worker, SQLx/SQLite) |
-| `lead-radar-frontend/` | Astro + Vue 3 + TypeScript dashboard (Bun) |
+| [`lead-radar-backend`](https://github.com/micio86dev/lead-radar-backend) | Rust modular monolith (Axum API + worker, SQLx/SQLite) |
+| [`lead-radar-frontend`](https://github.com/micio86dev/lead-radar-frontend) | Astro + Vue 3 + TypeScript dashboard (Bun) |
 
 Both are Git submodules with their own history. The root repository owns Compose, documentation,
 CI orchestration, scripts and environment examples only; it contains no application source.
