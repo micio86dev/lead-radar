@@ -56,5 +56,8 @@ cd lead-radar-frontend && bun install && bun run dev
 
 ## Volumes and permissions
 
-The backend image creates `/data` owned by UID 10001 and runs unprivileged. If you bind-mount a host
+The container starts as root only to repair the ownership of the mounted data volume and then drops to
+UID 10001 with `setpriv` before running the API, the worker or the stack entrypoint. That is what makes
+a host-provided volume (Railway, a named Docker volume) usable: SQLite cannot create its file in a
+root-owned directory. The application itself always runs unprivileged. If you bind-mount a host
 directory instead of the named volume, make it writable by that UID (or run with `user:` in Compose).

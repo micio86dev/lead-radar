@@ -72,6 +72,13 @@ railway deployment list -s backend --json    # status while the Rust image build
 `railway.json` (Config as Code) still works but is deprecated: Railway retires it on 2026-12-01 in
 favour of Infrastructure as Code (`.railway/railway.ts`, `railway config migrate`).
 
+## Volume ownership
+
+Railway mounts the volume as root while the image runs as UID 10001, so SQLite fails with
+`unable to open database file` unless the ownership is repaired. `deploy/entrypoint.sh` starts as root,
+fixes `/data` (directory and database files only, no recursive walk), then drops to UID 10001 with
+`setpriv`. If `setpriv` is missing the entrypoint refuses to run as root instead of silently doing so.
+
 ## Caveats
 
 - SQLite on a volume is a single-node design: no horizontal scaling, and the volume is the backup unit
