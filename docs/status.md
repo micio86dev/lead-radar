@@ -19,10 +19,10 @@ The root repository runs GitHub Actions on every push (`backend`: fmt, clippy wi
 
 | Area | State | Evidence |
 |---|---|---|
-| Domain rules (scoring, qualification, filtering, language, evidence, comment policy, job policy, cost guard) | implemented, unit tested | `cargo test --all-targets`: 96 library tests |
+| Domain rules (scoring, qualification, filtering, language, evidence, comment policy, job policy, cost guard, web fetch) | implemented, unit tested | `cargo test --all-targets`: 117 library tests |
 | Migrations and foreign keys | implemented, tested | migrations applied twice in `db::tests` |
 | Provider contracts (Jev/Laya wire protocol, Qwen chat completions, Apify REST) | implemented, tested with `wiremock` | adapter test modules |
-| API surface and OpenAPI document | implemented, tested | 17 integration tests in `tests/api.rs` |
+| API surface and OpenAPI document | implemented, tested | 35 integration tests in `tests/api.rs` |
 | Tenant isolation | implemented, tested | `tenant_isolation_is_enforced_for_every_resource` |
 | Import → normalization → decision → scoring → lead | implemented, tested | `import_pipeline_creates_one_qualified_lead`, Playwright pipeline spec |
 | Duplicate suppression | implemented, tested | `duplicate_imports_do_not_create_a_second_lead` |
@@ -36,6 +36,10 @@ The root repository runs GitHub Actions on every push (`backend`: fmt, clippy wi
 | Frontend action endpoint (form/JSON, origin policy, 4xx) | implemented, tested | `tests/e2e/action.spec.ts` (5 tests) |
 | Reply queue layout (source post, direct link, drafts, one-click copy) | implemented, tested | Playwright asserts the reading order, the Reddit link and that the clipboard receives exactly the editor text; commented screenshots verified at 1280 px and 390 px |
 | Reply queue (`/reply-queue`) with automatic preparation | implemented, tested | bounded to 3 drafts with a 10-minute cooldown per tenant; explicit button bypasses it; two API tests cover the match endpoint and the cooldown |
+| Tailwind design system, vertical shell, radar mark | implemented, tested | `@theme` tokens (light + dark), cursor policy, focus ring, reduced motion; `/` KPI cards and distribution bars; Playwright 15 tests including the sidebar focus order and the score floor |
+| Community engagement policy | implemented, tested | `self_promotion` (allowed/ask_mods/forbidden/unknown), minimum account age and karma, flair, cooldown, rules text; `a_pitch_is_not_recorded_as_published_until_the_community_allows_it`; unknown blocks |
+| Comment voice policy | implemented, tested | machine-phrasing list, emoji and `!!` rejection, no product mention in the helpful variant, disclosure required on a pitch; `domain::comment` voice tests |
+| Projects and community matching | implemented, tested | `projects` + `project_communities` (migration 0012), project-driven prompts with a visible failure when none exists, SSRF-safe page reading, ranking limited to validated+enabled communities; 2 API tests + `domain::webfetch` unit tests |
 | Chrome extension (MV3) | implemented, manual install | panel on the Reddit thread with the prepared drafts, best-effort editor pre-fill, copy, mark-as-posted; never submits and stores only the API token locally |
 | Reddit pacing, answered state, follow-ups | implemented, tested | pacing floor plus the wait the widget reports, answered leads leave the queue, follow-ups open on publication; 2 API tests, 2 Playwright tests; server-side Reddit polling deliberately absent because unauthenticated JSON returns 403 |
 | Queue preparation scheduler | implemented | `scripts/prepare-queue.sh` shared by the compose `scheduler` service, the launchd agent and the Railway cron service `lead-radar-cron` (`0 * * * *`); the API's three-draft cap and ten-minute cooldown bound the spend |
