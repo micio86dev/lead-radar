@@ -97,3 +97,15 @@ API calls, data and copy stay as they are.
   honest "no validated Actor" branch. Registering one there needs the operator's verified `actor_id` and
   its input template; the local stack has two (`harshmaur`, `trudax`) but the template is not rendered
   anywhere in the UI, and inventing one would break the no-invented-integrations rule.
+- L10 (delivery): the feature shipped as five frontend commits on `feature/lead-radar-mvp`
+  (tailwind+tokens, logo/primitives/shell, dashboard migration, inbox floor + start-search panel +
+  ConfirmSubmit fix, singular lead count) plus one backend commit for the deleted-content rule and two
+  root commits (docs, submodule bump). The advisory counted 1545 authored lines since `main` across those
+  commits, past the ~400-line slice: the boundaries above are the smallest reviewable units, because the
+  stylesheet rewrite is one indivisible change and the remaining pages stay on the component layer
+  instead of being rewritten. Further splitting would mean rewriting history for no review benefit.
+- L11 (deploy): `railway up` run from inside a submodule uploads the **parent repository root**, so
+  Railpack analyzes the wrong tree and the build fails before it starts (production untouched). The
+  deployment that works is a `git archive HEAD` export into a scratch directory, `railway link -p
+  <project> -e production -s <service>` there, then `railway up --ci -s <service>`. Both services
+  deployed from their own committed tree that way.
