@@ -1,10 +1,12 @@
 const apiBase = document.getElementById('apiBase');
 const token = document.getElementById('token');
+const consoleBase = document.getElementById('consoleBase');
 const status = document.getElementById('status');
 
-chrome.storage.local.get(['apiBase', 'token']).then(({ apiBase: base, token: saved }) => {
+chrome.storage.local.get(['apiBase', 'token', 'consoleBase']).then(({ apiBase: base, token: saved, consoleBase: dashboard }) => {
   if (base) apiBase.value = base;
   if (saved) token.value = saved;
+  if (dashboard) consoleBase.value = dashboard;
 });
 
 document.getElementById('save').addEventListener('click', async () => {
@@ -14,7 +16,11 @@ document.getElementById('save').addEventListener('click', async () => {
     status.textContent = 'Both fields are required.';
     return;
   }
-  await chrome.storage.local.set({ apiBase: base, token: value });
+  await chrome.storage.local.set({
+    apiBase: base,
+    token: value,
+    consoleBase: consoleBase.value.trim(),
+  });
   status.textContent = 'Saved locally.';
 });
 

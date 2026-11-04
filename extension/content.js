@@ -134,11 +134,11 @@
 
     const open = document.createElement('a');
     open.className = 'muted';
-    open.href = lead.url || '#';
     open.target = '_blank';
     open.rel = 'noopener noreferrer';
     open.textContent = 'Open in Lead Radar';
-    open.href = `${state.consoleBase}/opportunities/${lead.id}`;
+    open.href = state.consoleBase ? `${state.consoleBase}/opportunities/${lead.id}` : '#';
+    if (!state.consoleBase) open.hidden = true;
 
     const close = document.createElement('button');
     close.type = 'button';
@@ -190,13 +190,12 @@
   }
 
   (async () => {
-    const stored = await chrome.storage.local.get(['apiBase']);
-    state.consoleBase = (stored.apiBase || '').replace(/\/api$/, '');
+    const stored = await chrome.storage.local.get(['consoleBase']);
+    state.consoleBase = String(stored.consoleBase || '').replace(/\/$/, '');
     const response = await call(`/api/v1/reply-console/match?url=${encodeURIComponent(pageUrl())}`);
     if (!response.ok) {
-      if (response.status === 404) {
-        renderError('This thread is not in the reply queue. Open the queue to see what is ready.');
-      } else {
+      // A thread outside the queue is the normal case: stay invisible instead of adding noise.
+      if (response.status !== 404) {
         renderError(response.error || 'Could not reach Lead Radar. Check the extension options.');
       }
       return;
