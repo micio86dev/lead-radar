@@ -51,14 +51,18 @@ lead-radar/
 
 ## Submodule notes
 
-Both submodules are local repositories created without a remote. To attach a
-remote later:
+Both submodules are published public repositories; `origin` is already configured on
+each of them and on this repository, and all three track `feature/lead-radar-mvp`:
 
 ```
-git -C lead-radar-backend remote add origin <url>
-git -C lead-radar-frontend remote add origin <url>
-git submodule sync --recursive
+lead-radar           https://github.com/micio86dev/lead-radar.git
+lead-radar-frontend  https://github.com/micio86dev/lead-radar-frontend.git
+lead-radar-backend   https://github.com/micio86dev/lead-radar-backend.git
 ```
+
+A fresh clone needs `git submodule update --init --recursive`. `Never push` (product
+rule 6) still holds as the default: pushes and deployments happen only on the
+operator's explicit instruction for a named change.
 
 ## Local hooks
 
