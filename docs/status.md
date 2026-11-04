@@ -2,6 +2,14 @@
 
 Last updated from observed runs on this machine. Nothing here is aspirational.
 
+## Deployment
+
+A live deployment runs on Railway (project `lead-radar`): one backend service (API + worker against one
+SQLite volume) and one frontend service. Verified in production: migrations and idempotent seeds on the
+volume, bootstrap token authentication, real decision provider call, the full import → lead →
+comment-drafting path, and server-side rendering reading the API over private networking. The exact
+commands and the volume-ownership fix are in [`deploy-railway.md`](deploy-railway.md).
+
 ## Continuous integration
 
 The root repository runs GitHub Actions on every push (`backend`: fmt, clippy with `-D warnings`, tests;

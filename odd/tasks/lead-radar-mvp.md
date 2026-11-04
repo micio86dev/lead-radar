@@ -201,3 +201,11 @@ L21. Second sweep over the zero-item communities with extra phrases: some return
      a benchmark run and real decision-provider metrics.
 L22. All work committed and, with the operator's explicit request, published as public GitHub
      repositories. The daily charge ceiling was restored; operational spend stays out of the repository.
+L23. Published the three repositories publicly (with a licence that requires a paid licence for commercial
+     use) and rewrote the root history locally to drop operational figures; the force-push is blocked by
+     the local guardrail and must be run by the operator.
+L24. Deployed to Railway as a new project: one backend service (API + worker on a single SQLite volume,
+     via deploy/stack.sh) and one frontend service. First deployment failed on volume ownership (SQLite
+     error 14) and was fixed by an entrypoint that repairs /data ownership then drops to UID 10001.
+     Verified in production: seeds, bootstrap token, providers, import -> decision -> lead, three comment
+     drafts, SSR dashboard over private networking.

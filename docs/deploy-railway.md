@@ -79,6 +79,14 @@ Railway mounts the volume as root while the image runs as UID 10001, so SQLite f
 fixes `/data` (directory and database files only, no recursive walk), then drops to UID 10001 with
 `setpriv`. If `setpriv` is missing the entrypoint refuses to run as root instead of silently doing so.
 
+## Verified state
+
+The first deployment was exercised end to end: `/health` and `/ready` answer, the seeds create the tenant,
+profiles, communities, keywords, scoring v3 and the bootstrap token, the provider panel reports the
+decision and generative providers as configured, a manual import produced a lead through a real decision
+call, and three comment drafts were stored for review. The dashboard renders through private networking
+with the server-side token.
+
 ## Caveats
 
 - SQLite on a volume is a single-node design: no horizontal scaling, and the volume is the backup unit
