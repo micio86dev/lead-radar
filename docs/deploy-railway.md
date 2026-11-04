@@ -69,6 +69,21 @@ railway logs -s backend
 railway deployment list -s backend --json    # status while the Rust image builds
 ```
 
+## Applying variable changes
+
+`railway restart` and `railway redeploy` reuse the **environment snapshot of the existing deployment**,
+so a new value does not reach the container: the seed keeps reporting `bootstrap_token_created=false` and
+the new token is rejected. Only a **new deployment from source** (`railway up`, or a deploy from the
+dashboard) applies the current variables. `--skip-deploys` is still useful to batch several variable
+writes, but finish with one `railway up`.
+
+## Token rotation
+
+`BOOTSTRAP_API_TOKEN` is the single source of truth. To rotate: set the new value on the backend, set the
+same value as `LEAD_RADAR_API_TOKEN` on the frontend, then deploy (`railway up`). On every start the stack
+entrypoint runs `db prune-tokens`, which deletes bootstrap token rows whose hash is not the configured
+one, so the previous token stops working immediately instead of lingering.
+
 `railway.json` (Config as Code) still works but is deprecated: Railway retires it on 2026-12-01 in
 favour of Infrastructure as Code (`.railway/railway.ts`, `railway config migrate`).
 
