@@ -187,16 +187,17 @@ L16. Communities: 12 new candidates added after web research (36 total, 29 enabl
      25 remaining enabled communities (quoted phrases, 10 items, USD cap per run).
 L17. Official Reddit API: verified that new public API access closed on 2026-10-31 and ends March 2027;
      guide and a credential diagnostic script added (docs/reddit-official-api.md, scripts/reddit-token-check.sh).
-L18. Community sweep completed: 25 targeted searches (25/25 succeeded), 495 items, the recorded spend total Apify
-     spend (the configured credit), opportunities. First qualified lead: r/EventProduction "Live
-     Translation Apps and AI?" (73 warm) with three Qwen drafts pending review. Eight enabled communities
-     returned zero items for the quoted phrases; recorded as a search-precision observation, not a defect.
-L19. APIFY_DAILY_CHARGE_USD restored to 1.00 after the sweep (it was raised to 3.00 to finish it).
-L20. Scoring v3 (support/hospitality thresholds 60) plus `db rescore`: leads re-evaluated from stored
-     decisions, 41 changed, zero provider spend. Seed vocabulary now carries 96 keywords (spec lists plus
-     the variants observed in real posts). Reusable sweep script committed.
-L21. Second sweep over the 8 zero-item communities with extra phrases: customersuccess 10 items, AskHR 12,
-     Recruiter 1, others 0; 2 new leads (186 total). Live benchmark path verified end to end: labeled
-     dataset ingestion (2 examples) -> run -> real Jev metrics, the measured latency average latency.
-L22. All work committed on feature/lead-radar-mvp in the three local repositories; nothing pushed.
-     APIFY_DAILY_CHARGE_USD back to 1.00; monthly Apify the configured credit.
+L18. Community sweep completed: every targeted run succeeded, ingestion and decisions ran, and one lead
+     reached `qualified` with three Qwen drafts pending review. Several communities returned nothing for
+     the quoted phrases; recorded as a search-precision observation, not a defect. Operational volumes
+     and spend are not recorded in this repository.
+L19. The daily USD charge ceiling was raised for the sweep and restored afterwards.
+L20. Scoring v3 (support/hospitality thresholds 60) plus `db rescore`: the existing database was
+     re-evaluated from stored decisions at zero provider cost, and a minority of scores/qualifications
+     changed. Seed vocabulary now carries the specification lists plus the variants observed in real
+     posts. Reusable sweep script committed.
+L21. Second sweep over the zero-item communities with extra phrases: some returned items and the
+     pipeline produced further leads. Live benchmark path verified end to end: labeled dataset ingestion,
+     a benchmark run and real decision-provider metrics.
+L22. All work committed and, with the operator's explicit request, published as public GitHub
+     repositories. The daily charge ceiling was restored; operational spend stays out of the repository.

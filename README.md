@@ -47,6 +47,12 @@ The implementation status of every product area (implemented, tested offline, te
 providers, blocked) is tracked in [`docs/status.md`](docs/status.md). It is generated from observed
 test runs, not from intentions.
 
+## License
+
+[PolyForm Noncommercial License 1.0.0](LICENSE): free for noncommercial use. Commercial use requires a
+paid license — see [`COMMERCIAL.md`](COMMERCIAL.md). This is a source-available license, not an OSI
+open-source license.
+
 ## Non-negotiables
 
 1. No automatic publication or third-party account interaction.

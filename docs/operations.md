@@ -33,8 +33,8 @@ its stored classification, publication time and engagement, recomputes the deter
 **active** configuration, updates the lead and appends a `lead_scores` row recording the new version.
 No provider is called. Output is a JSON summary (`examined`, `updated`, `skipped`, `version`).
 
-Observed on the real dataset: scoring version 3 (support and hospitality thresholds at 60) examined 184
-leads and changed 41 scores/qualifications at zero cost.
+Because it reads only stored decisions, a version change can be applied to an existing database at zero
+provider cost. Business metrics of a real run are not published in this repository.
 
 ## Jobs
 
