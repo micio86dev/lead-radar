@@ -152,6 +152,26 @@ Query: `vertical`, `score_category`, `score_min`, `score_max`, `intent`, `langua
 
 `decision` is `null` before the first decision; `score_breakdown` is `null` before scoring.
 
+### `GET /api/v1/reply-console?limit=25`
+
+Compact queue for the reply console: active leads with `qualification_status` `qualified` or
+`needs_review`, qualified first then by score. Each item is `{ lead: OpportunityListItem &
+{ content_snippet }, comments: CommentSummary[] }`; `stats` reports `ready` (has drafts), `needs_drafts`
+and `returned`.
+
+### `POST /api/v1/reply-console/prepare`
+
+`{ "limit": 5 }` (1–10) queues draft generation for leads without drafts and returns
+`{ "queued": 2, "job_ids": [...] }`. `503` when the generative provider is unconfigured.
+
+### `POST /api/v1/opportunities/:id/reply`
+
+`{ "variant": "helpful", "body?": "edited text", "engagement_kind?": "reply", "note?": "..." }` — one
+audited step: saves an edited body as a new version, approves the draft, records the manual publication,
+optionally records the engagement and marks the review as resolved. Returns
+`{ comment, engagement, lead_id }`. `409` when the draft is missing (`draft_missing`) or already
+published; `403` for a viewer role. Nothing is sent to Reddit.
+
 ### `POST /api/v1/opportunities/:id/analyze`
 
 Queues a fresh decision + scoring pass. `202` — `{ "job_id": "uuid", "lead_id": "uuid" }`.
