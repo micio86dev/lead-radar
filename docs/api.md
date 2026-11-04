@@ -159,6 +159,27 @@ Compact queue for the reply console: active leads with `qualification_status` `q
 { content_snippet }, comments: CommentSummary[] }`; `stats` reports `ready` (has drafts), `needs_drafts`
 and `returned`.
 
+### `GET /api/v1/reply-console?include_answered=1`
+
+The queue leaves out the leads whose reply was already recorded as published; `include_answered` (accepts
+`1`/`true`) adds them back with `lead.answered_at`. The response also carries
+`stats.answered` and `pacing: {next_reply_at, retry_after_seconds, source}`.
+
+### `POST /api/v1/reply-console/rate-limit`
+
+`{ "minutes": 3 }` (1–1440) records the wait Reddit announced through the browser widget, replacing the
+configured floor. Returns `{next_reply_at, retry_after_seconds}`; invalid input is `422` and writes nothing.
+
+### `GET /api/v1/followups?state=waiting|answered|closed|all&limit=…`
+
+Threads where a reply was published. Each item carries `state`, `new_replies`, `last_reporter`,
+`last_excerpt`, `last_reply_at` and `published_at`.
+
+### `POST /api/v1/opportunities/{id}/followup`
+
+Optional `{state, new_replies, last_reporter, latest_excerpt, latest_reply_at}`; only the provided fields
+change. `409 no_publication` when nothing was recorded as posted for that lead.
+
 ### `GET /api/v1/reply-console/match?url=…`
 
 Resolves the queue item for a Reddit URL, normalising a trailing slash, query string and fragment. Used

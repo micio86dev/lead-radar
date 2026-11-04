@@ -96,6 +96,14 @@ macOS gotcha: launchd cannot read this repository when it lives on an external v
 `Operation not permitted`), so `cron-install` writes a small runner under `~/Library/Application Support`
 and keeps the API base and token in `~/.config/lead-radar` (0600). Nothing secret goes into the plist.
 
+## Reply pacing
+
+`REPLY_MIN_INTERVAL_MINUTES` (default 10) is the floor shown after a recorded publication; Reddit's own
+limit is per account and changes with karma and subreddit, so treat the floor as a reminder, not authority.
+The widget can lower or raise the stored wait to what Reddit actually announced
+(`POST /api/v1/reply-console/rate-limit`), and the value is visible in `/reply-console` as
+`pacing.retry_after_seconds`. There is no automatic retry anywhere in this path.
+
 ## Routine checks
 
 1. `GET /ready` returns 200 and `/api/v1/jobs?status=dead_letter` is empty or explained.

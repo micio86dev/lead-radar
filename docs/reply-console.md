@@ -25,6 +25,24 @@ decision.
 - Keyboard: `j`/`k` next/previous, `1`/`2`/`3` variant, `c` copy, `o` open thread, `p` posted,
   `g` generate.
 
+## Reddit's throttle and the answered state
+
+Reddit limits an account on its own terms (karma, account age, per-subreddit rules); the app never claims to
+bypass that. After a reply is recorded as posted the queue shows the wait (`REPLY_MIN_INTERVAL_MINUTES`,
+default 10) as a countdown, and the browser widget can report the exact wait Reddit announced, which then
+replaces the floor. Nothing is retried, and nothing is published from the dashboard.
+
+A lead whose reply was recorded leaves the queue. The **Answered** switch (`/reply-queue?answered=1`) shows
+them again with the date, so the same thread is never handled twice by accident.
+
+## Follow-ups
+
+`/follow-ups` lists the threads where a reply was published, waiting for an answer: who replied, how many
+new replies, the excerpt, and the actions *open thread*, *mark answered* and *close*. Follow-ups open
+automatically when a reply is recorded. Because Reddit blocks unauthenticated JSON (verified `403`), the
+server does not poll Reddit: the browser widget reports what it sees on the thread it is open on, and the
+page says so instead of pretending.
+
 ## Chrome extension
 
 [`extension/`](../extension/README.md) is an unpacked MV3 extension: on a Reddit thread it shows the
