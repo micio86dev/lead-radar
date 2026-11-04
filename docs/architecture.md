@@ -68,3 +68,22 @@ allow-list of operations and no generic proxy. Helper logic (formatting, filters
 - Bun dependencies pinned by `bun.lock`.
 - Container images pinned by tag: `rust:1.89.0-bookworm`, `debian:bookworm-slim`,
   `oven/bun:1.4.2`, `node:24.18.0-alpine`.
+
+## Projects and community matching
+
+The product a tenant works on is a row, not a constant: `projects` holds a name, a summary in the
+operator's own words, the public URLs that describe the product, and one project per tenant is the
+default. The drafting prompts read that project; when no project exists the drafting path fails
+visibly (`no project configured: add one on /projects`) instead of inventing a product. The seeding
+step gives a fresh tenant its first project with the text that used to be hardcoded, so the migration
+loses no behaviour.
+
+`POST /api/v1/projects/{id}/match-communities` reads the project's pages through `domain::webfetch`
+— `http`/`https` only, public addresses only, no redirects, a timeout and a byte cap — and asks the
+configured generative provider to score every community that is **already validated and enabled**.
+The ranking lands in `project_communities`. It is advisory by construction: the analysis cannot
+enable, disable or validate a community, and it collects nothing.
+
+Opportunity import stays manual: the JSON import and an operator-started Apify run are the only ways
+content enters the pipeline.
+

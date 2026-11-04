@@ -42,15 +42,15 @@ account blocks the whole channel.
 
 ## Tasks
 
-- [ ] T1 · S2 · migration `projects`, module with CRUD, tenant isolation, `/api/v1/projects` routes
-- [ ] T2 · S3 · data migration of the current product text into a default project, and the prompt
+- [x] T1 · S2 · migration `projects`, module with CRUD, tenant isolation, `/api/v1/projects` routes
+- [x] T2 · S3 · data migration of the current product text into a default project, and the prompt
       paths reading it (with a visible failure when it is missing)
-- [ ] T3 · S5 · bounded fetch helper with the SSRF guard and per-URL outcomes, unit tested
-- [ ] T4 · S4 · matching run over validated+enabled communities, `project_communities` storage,
+- [x] T3 · S5 · bounded fetch helper with the SSRF guard and per-URL outcomes, unit tested
+- [x] T4 · S4 · matching run over validated+enabled communities, `project_communities` storage,
       mock-provider tests for success, refusal and unparseable output
-- [ ] T5 · S2, S4, S7 · `/projects` page: list, create/edit with URLs, run the analysis, show the
+- [x] T5 · S2, S4, S7 · `/projects` page: list, create/edit with URLs, run the analysis, show the
       ranked communities with their reason
-- [ ] T6 · S6, S7 · docs: architecture and status pages, plus the statement that collection stays
+- [x] T6 · S6, S7 · docs: architecture and status pages, plus the statement that collection stays
       manual
 
 ## Log
@@ -63,3 +63,13 @@ account blocks the whole channel.
   boundary, not a convenience. It is the reason T3 is its own task with its own tests.
 - L4 (order): the community engagement policy (migration `0011`) shipped first: a removed comment and
   a one-account channel make publication safety the higher-priority unit.
+- L5 (evidence): verification on 2026-11-04 — backend `cargo test --all-targets` green (117 unit + 35
+  integration, including the new projects, matching, SSRF-guard and voice tests) and
+  `cargo clippy --all-targets -D warnings` clean; frontend `astro check` 0 errors, prettier clean,
+  Vitest 11/11, `astro build` complete. The SSRF guard is unit tested against loopback, private,
+  link-local, carrier-grade NAT and IPv4-mapped addresses; the matching tests prove that only
+  validated+enabled communities are candidates, that a tenant cannot see another tenant's project, and
+  that an answer naming unknown communities is refused as unusable.
+- L6 (delivery): shipped as two backend commits (surface + prompts), one frontend commit (the page) and
+  one root commit (docs, submodule bumps). The slice exceeds ~400 authored lines because the migration,
+  the module and the HTTP surface cannot ship in pieces that keep the build green.
