@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lead Radar Reply — options</title>
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body class="panel">
+    <h1>Lead Radar Reply</h1>
+    <p class="muted">
+      The extension only reads your reply queue and prepares text. It never posts to Reddit: you press
+      Reply yourself.
+    </p>
+    <label for="apiBase">API base URL</label>
+    <input id="apiBase" placeholder="https://backend-production-138f.up.railway.app" />
+    <label for="token">API token (stored locally, never synced)</label>
+    <input id="token" type="password" autocomplete="off" />
+    <div class="actions">
+      <button id="save" type="button">Save</button>
+      <button id="test" type="button" class="secondary">Test connection</button>
+    </div>
+    <p id="status" role="status" class="muted"></p>
+    <p class="muted small">
+      Use a dedicated token: it has the same power as the dashboard. Rotate it from the backend when
+      needed; there is no cloud sync of this value.
+    </p>
+    <script src="options.js"></script>
+  </body>
+</html>

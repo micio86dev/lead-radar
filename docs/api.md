@@ -159,10 +159,18 @@ Compact queue for the reply console: active leads with `qualification_status` `q
 { content_snippet }, comments: CommentSummary[] }`; `stats` reports `ready` (has drafts), `needs_drafts`
 and `returned`.
 
+### `GET /api/v1/reply-console/match?url=…`
+
+Resolves the queue item for a Reddit URL, normalising a trailing slash, query string and fragment. Used
+by the browser extension on the thread page. `404` when no lead matches.
+
 ### `POST /api/v1/reply-console/prepare`
 
-`{ "limit": 5 }` (1–10) queues draft generation for leads without drafts and returns
-`{ "queued": 2, "job_ids": [...] }`. `503` when the generative provider is unconfigured.
+`{ "limit": 5, "auto": false }` (limit 1–10) queues draft generation for leads without drafts and returns
+`{ "queued": 2, "job_ids": [...] }`. With `auto: true` (the console preparing on page load) the limit is
+capped at 3 and a 10-minute per-tenant cooldown applies, so a refresh cannot queue paid generation
+repeatedly; the response then also carries `cooldown_minutes`. `503` when the generative provider is
+unconfigured.
 
 ### `POST /api/v1/opportunities/:id/reply`
 

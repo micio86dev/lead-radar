@@ -28,8 +28,10 @@ make seed                     # idempotent seed data
 open http://localhost:4321
 ```
 
-Daily work happens in **/reply**: one screen per lead with the draft inline, copy, open thread and a
-single "I posted it" action that records the publication. Nothing is published automatically.
+Daily work happens in **/reply-queue**: one screen per lead with the draft inline, copy, open thread and a
+single "I posted it" action that records the publication. The optional Chrome extension
+([`extension/`](extension/README.md)) brings the same draft onto the Reddit page and pre-fills the comment
+box. Nothing is published automatically.
 
 Provider credentials are optional. Without them the application runs the full pipeline against the
 built-in mock providers and the dashboard reports the affected providers as `unconfigured`.

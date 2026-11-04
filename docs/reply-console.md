@@ -19,8 +19,21 @@ decision.
   marks the lead's review as resolved. The same draft cannot be recorded twice.
 - `POST /api/v1/reply-console/prepare` queues draft generation for the next leads without drafts (at most
   ten per call) so the queue is ready when you sit down.
+- The page lives at **`/reply-queue`** (`/reply` redirects) and prepares drafts on load: when fewer
+  than five leads have drafts it queues up to three generations, rate limited by the endpoint's
+  ten-minute cooldown, so the queue is ready by the time you sit down.
 - Keyboard: `j`/`k` next/previous, `1`/`2`/`3` variant, `c` copy, `o` open thread, `p` posted,
   `g` generate.
+
+## Chrome extension
+
+[`extension/`](../extension/README.md) is an unpacked MV3 extension: on a Reddit thread it shows the
+prepared drafts for that URL, lets you edit and copy, and **pre-fills Reddit's comment box**. You press
+Reddit's Reply button. "Mark as posted" records the publication through the same endpoint the console
+uses. Load it from `chrome://extensions` → Developer mode → Load unpacked.
+
+The extension never submits, never touches other accounts, and never stores your Reddit password: it only
+holds the Lead Radar API token in `chrome.storage.local`.
 
 ## What we deliberately do not do
 

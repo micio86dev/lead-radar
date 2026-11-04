@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Lead Radar Reply",
+  "version": "0.1.0",
+  "description": "Brings the prepared reply for the Reddit thread you are reading into the page. You press Reply.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "http://localhost:8080/*",
+    "https://*.up.railway.app/*",
+    "https://*.reddit.com/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "options_page": "options.html",
+  "action": { "default_popup": "popup.html", "default_title": "Lead Radar Reply" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.reddit.com/r/*/comments/*", "https://old.reddit.com/r/*/comments/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

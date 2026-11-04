@@ -1,0 +1,65 @@
+#lead-radar-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 360px;
+  max-height: 70vh;
+  overflow: auto;
+  z-index: 2147483647;
+  background: #f7f8fa;
+  color: #14181f;
+  border: 1px solid #d5dae3;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  padding: 10px;
+}
+#lead-radar-panel h2 {
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+#lead-radar-panel .row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+#lead-radar-panel button {
+  font: inherit;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #1f5fd0;
+  background: #1f5fd0;
+  color: #fff;
+  padding: 4px 9px;
+  cursor: pointer;
+}
+#lead-radar-panel button.secondary {
+  background: #fff;
+  color: #17459a;
+  border-color: #d5dae3;
+}
+#lead-radar-panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 80px;
+  margin-top: 6px;
+  font: inherit;
+  padding: 6px;
+  border: 1px solid #d5dae3;
+  border-radius: 6px;
+}
+#lead-radar-panel .tabs button {
+  background: #fff;
+  color: #17459a;
+  border-color: #d5dae3;
+}
+#lead-radar-panel .tabs button[aria-selected='true'] {
+  background: #1f5fd0;
+  color: #fff;
+  border-color: #1f5fd0;
+}
+#lead-radar-panel .muted {
+  color: #4d5766;
+}
