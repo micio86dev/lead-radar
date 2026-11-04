@@ -69,6 +69,33 @@ their type and status, never with credentials or full upstream bodies.
 content older than the window and marks posts deleted. `DELETE /api/v1/opportunities/:id` handles
 individual removal requests and writes an audit entry.
 
+## Reply queue preparation (scheduled)
+
+The queue refills itself from two schedulers that run the same script, `scripts/prepare-queue.sh`
+(`POST /api/v1/reply-console/prepare` with `{"limit": N, "auto": true}`):
+
+| Where | Mechanism | Schedule | Logs |
+| --- | --- | --- | --- |
+| Local stack | `scheduler` service in `docker-compose.yml` (same image as the cron job, script mounted read-only) | `PREPARE_INTERVAL_SECONDS`, default 3600 | `docker compose logs -f scheduler` |
+| Local, native run | launchd agent `dev.leadradar.prepare-queue` (`make cron-install`) | 3600 s | `~/Library/Logs/lead-radar/prepare-queue.log` |
+| Railway | service `lead-radar-cron` (cron schedule `0 * * * *`) | hourly | `railway logs -s lead-radar-cron` |
+
+The API caps automatic runs at three drafts and applies a ten-minute per-tenant cooldown, so a shorter
+interval or a page refresh cannot multiply spending; the "Generate drafts" button on a card bypasses the
+cooldown for a deliberate single batch.
+
+```
+make prepare-queue     # one run against the local API
+make cron-install      # launchd agent (native runs only)
+make cron-status
+make cron-run          # trigger one run now
+make cron-uninstall    # --purge also removes the stored token
+```
+
+macOS gotcha: launchd cannot read this repository when it lives on an external volume (TCC returns
+`Operation not permitted`), so `cron-install` writes a small runner under `~/Library/Application Support`
+and keeps the API base and token in `~/.config/lead-radar` (0600). Nothing secret goes into the plist.
+
 ## Routine checks
 
 1. `GET /ready` returns 200 and `/api/v1/jobs?status=dead_letter` is empty or explained.

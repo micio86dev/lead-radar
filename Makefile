@@ -61,7 +61,25 @@ reset-db:
 	$(COMPOSE) down -v
 	@echo "data volume removed"
 
-test: test-backend test-frontend
+cron-install:
+	@scripts/install-cron.sh install
+
+cron-status:
+	@scripts/install-cron.sh status
+
+cron-run:
+	@scripts/install-cron.sh run-now
+
+cron-uninstall:
+	@scripts/install-cron.sh uninstall
+
+prepare-queue:
+	@LOG_FILE=logs/prepare-queue.log scripts/prepare-queue.sh
+
+test: test-backend test-frontend test-scripts
+
+test-scripts:
+	@scripts/test-prepare-queue.sh
 
 test-backend:
 	cd $(BACKEND) && cargo test --all-targets

@@ -58,6 +58,30 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  # Keeps the reply queue full while the stack runs: same script as the Railway cron, one request per
+  # interval. The endpoint's own cooldown protects the provider budget if the interval is lowered.
+  scheduler:
+    build:
+      context: .
+      dockerfile: deploy/cron/Dockerfile
+    image: lead-radar/cron:0.1.0
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_BASE: http://api:8080
+      API_TOKEN: ${DEV_API_TOKEN:?DEV_API_TOKEN is required}
+      LIMIT: ${PREPARE_LIMIT:-3}
+      INTERVAL_SECONDS: ${PREPARE_INTERVAL_SECONDS:-3600}
+      LOG_FILE: /tmp/prepare-queue.log
+    volumes:
+      - ./scripts/prepare-queue.sh:/usr/local/bin/prepare-queue.sh:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - 'while true; do /usr/local/bin/prepare-queue.sh || true; sleep "$${INTERVAL_SECONDS}"; done'
+    restart: unless-stopped
+
 volumes:
   lead-radar-data:
     name: lead-radar-data

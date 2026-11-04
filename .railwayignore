@@ -1,0 +1,16 @@
+target/
+**/target/
+node_modules/
+**/node_modules/
+data/
+logs/
+.git/
+.env
+*.db
+*.db-shm
+*.db-wal
+tests/e2e/playwright-report/
+tests/e2e/test-results/
+extension/
+docs/
+odd/

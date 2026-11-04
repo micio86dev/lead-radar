@@ -109,3 +109,20 @@ with the server-side token.
 - A Railway redeploy rebuilds the Rust release image; the first build is the long one.
 - The frontend reads the API token server-side only; it is never part of the browser bundle.
 - Migrations run on every container start (they are versioned and idempotent).
+
+## Reply queue cron
+
+The service `lead-radar-cron` runs `deploy/cron/Dockerfile` (alpine + bash + curl, entrypoint
+`scripts/prepare-queue.sh`) on the schedule `0 * * * *`, so the queue is refilled even when nobody opens the
+dashboard.
+
+- Build: `RAILWAY_DOCKERFILE_PATH=deploy/cron/Dockerfile`, pushed from the repository root
+  (`.railwayignore` keeps `target/`, `node_modules/`, `data/`, `.env` out of the upload).
+- Variables: `API_BASE=http://backend.railway.internal:8080` (private networking, no public hop),
+  `API_TOKEN` (bootstrap token), `LIMIT=3`.
+- The schedule lives on the service instance (`cronSchedule`), not in the image; a cron service runs its
+  start command once per tick and exits.
+- Logs: `railway logs -s lead-radar-cron`; each run prints one JSON line such as
+  `{"job_ids":[],"queued":0}` (`queued: 0` is normal once every lead has drafts, or inside the cooldown).
+- The backend caps automatic runs at three drafts with a ten-minute cooldown, so an hourly tick never
+  amplifies provider spending.

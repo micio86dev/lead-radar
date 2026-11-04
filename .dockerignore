@@ -1,0 +1,15 @@
+.git
+target
+**/target
+node_modules
+**/node_modules
+data
+logs
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+!.env.example
+tests/e2e/playwright-report
+tests/e2e/test-results

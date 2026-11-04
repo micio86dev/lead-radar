@@ -36,6 +36,7 @@ The root repository runs GitHub Actions on every push (`backend`: fmt, clippy wi
 | Frontend action endpoint (form/JSON, origin policy, 4xx) | implemented, tested | `tests/e2e/action.spec.ts` (5 tests) |
 | Reply queue (`/reply-queue`) with automatic preparation | implemented, tested | bounded to 3 drafts with a 10-minute cooldown per tenant; explicit button bypasses it; two API tests cover the match endpoint and the cooldown |
 | Chrome extension (MV3) | implemented, manual install | panel on the Reddit thread with the prepared drafts, best-effort editor pre-fill, copy, mark-as-posted; never submits and stores only the API token locally |
+| Queue preparation scheduler | implemented | `scripts/prepare-queue.sh` shared by the compose `scheduler` service, the launchd agent and the Railway cron service `lead-radar-cron` (`0 * * * *`); the API's three-draft cap and ten-minute cooldown bound the spend |
 | Reply console (fast human workflow) | implemented, tested | queue endpoint, one-action reply recording (approve + publish + engagement), bulk draft preparation, keyboard-driven UI; 2 API tests and one Playwright scenario |
 | Source validation before enabling | implemented, tested | `sources_require_recorded_validation_before_enabling` |
 | Provider-side run cap (`maxTotalChargeUsd`) | implemented, tested | adapter wiremock body assertion + config test |
