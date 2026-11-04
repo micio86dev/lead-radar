@@ -34,6 +34,7 @@ The root repository runs GitHub Actions on every push (`backend`: fmt, clippy wi
 | Seeds idempotent | implemented, tested | `seeds_are_idempotent` |
 | Job retry and dead letter | implemented, tested | `jobs_can_be_retried_and_dead_letters_are_visible` |
 | Frontend action endpoint (form/JSON, origin policy, 4xx) | implemented, tested | `tests/e2e/action.spec.ts` (5 tests) |
+| Reply queue layout (source post, direct link, drafts, one-click copy) | implemented, tested | Playwright asserts the reading order, the Reddit link and that the clipboard receives exactly the editor text; commented screenshots verified at 1280 px and 390 px |
 | Reply queue (`/reply-queue`) with automatic preparation | implemented, tested | bounded to 3 drafts with a 10-minute cooldown per tenant; explicit button bypasses it; two API tests cover the match endpoint and the cooldown |
 | Chrome extension (MV3) | implemented, manual install | panel on the Reddit thread with the prepared drafts, best-effort editor pre-fill, copy, mark-as-posted; never submits and stores only the API token locally |
 | Queue preparation scheduler | implemented | `scripts/prepare-queue.sh` shared by the compose `scheduler` service, the launchd agent and the Railway cron service `lead-radar-cron` (`0 * * * *`); the API's three-draft cap and ten-minute cooldown bound the spend |
