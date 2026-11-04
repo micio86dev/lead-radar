@@ -31,6 +31,19 @@ the thread, never paste a link where the community forbids self-promotion, and p
 variant. "Warmed-up" accounts and automatic upvotes/DMs — what tools like Bazzly sell — are exactly what
 gets accounts banned; this extension does none of that.
 
+## Reddit rate limits
+
+If Reddit answers "you're doing that too much, try again in N minutes", that wait belongs to your Reddit
+account (karma, account age, per-subreddit rules). The extension does not work around it: it reads the wait
+Reddit itself announced, reports it to Lead Radar so the queue shows the same countdown, and shows it in the
+panel. Nothing is retried, nothing is resubmitted, and no second account is involved.
+
+## Follow-ups
+
+On a thread where you already replied as posted, the panel shows the follow-up state and a **Mark answered**
+button, and it reports new replies it can date from the page. When the DOM does not expose timestamps, it
+reports nothing instead of guessing. The `Follow-ups` page in the dashboard lists what it received.
+
 ## Limits
 
 - Reddit's DOM changes: the pre-fill uses best-effort selectors (new and old Reddit). If it cannot find

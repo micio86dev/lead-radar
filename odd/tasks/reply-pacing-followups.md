@@ -29,10 +29,10 @@ answered, and track threads that may get a reply back.
 
 ## Tasks
 
-- [x] T1 · S2, S3, S4 · backend: migration, pacing in `/reply-console`, answered filter, follow-up endpoints and tests · commit 7d20590
-- [x] T2 · S3, S5 · frontend: pacing banner, To reply/Answered switch, `/follow-ups` page and Playwright coverage · commit f-ued
-- [x] T3 · S6 · extension: rate-limit detection, countdown, new-reply reporting · commit ext
-- [x] T4 · S5 · docs: operations and reply-console pages, Reddit limit explanation · commit docs
+- [x] T1 · S2, S3, S4 · backend: migration, pacing in `/reply-console`, answered filter, follow-up endpoints and tests · commit 7d20590 (backend)
+- [x] T2 · S3, S5 · frontend: pacing banner, To reply/Answered switch, `/follow-ups` page and Playwright coverage · commit 29aee2a
+- [x] T3 · S6 · extension: rate-limit detection, countdown, new-reply reporting · commit 679aef1
+- [x] T4 · S5 · docs: operations and reply-console pages, Reddit limit explanation · commit 8c7f5a4
 
 ## Log
 

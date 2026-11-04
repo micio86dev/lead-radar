@@ -36,5 +36,28 @@ async function load() {
   }
 }
 
-document.getElementById('refresh').addEventListener('click', load);
+async function loadFollowups() {
+  const slot = document.getElementById('followups');
+  const response = await chrome.runtime.sendMessage({
+    type: 'api',
+    path: '/api/v1/followups?state=waiting&limit=5',
+  });
+  const items = response.ok ? response.data?.items ?? [] : [];
+  if (items.length === 0) {
+    slot.hidden = true;
+    return;
+  }
+  const withReplies = items.filter((item) => Number(item.new_replies) > 0).length;
+  slot.textContent =
+    withReplies > 0
+      ? `${items.length} follow-up${items.length === 1 ? '' : 's'} waiting · ${withReplies} with new replies`
+      : `${items.length} follow-up${items.length === 1 ? '' : 's'} waiting`;
+  slot.hidden = false;
+}
+
+document.getElementById('refresh').addEventListener('click', () => {
+  void load();
+  void loadFollowups();
+});
 load();
+loadFollowups();
