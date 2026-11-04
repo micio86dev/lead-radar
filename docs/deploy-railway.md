@@ -46,18 +46,31 @@ old one from the database when the new one works.
 
 ```bash
 railway init --name lead-radar
-railway add --service backend
-railway add --service frontend
+railway add -s backend
+railway add -s frontend
 
-# secrets come from .env; use --stdin so the value never appears in argv
+# secrets come from .env; --stdin keeps the value out of argv
 railway variable set -s backend APP_ENV --stdin <<< production
 
-railway volume add -s backend --mount-path /data
-railway up -s backend --detach          # from lead-radar-backend/
-railway up -s frontend --detach         # from lead-radar-frontend/
-railway domain -s frontend              # public dashboard URL
+# Volumes need the service *id*: with v5.68 a service name on the volume command panics.
+railway status --json            # read environments[].serviceInstances[].serviceId
+railway volume -p <project-id> -e <environment-id> -s <service-id> add -m /data
+
+railway variable set -s backend PORT=8080                    # the edge probes this port
+railway variable set -s frontend PORT=8080 HOST=0.0.0.0 \
+  API_INTERNAL_URL=http://backend.railway.internal:8080 \
+  PUBLIC_API_BASE_URL=<backend public domain> LEAD_RADAR_API_TOKEN=<bootstrap token>
+
+railway domain -s backend        # public API domain (display/verification)
+railway domain -s frontend       # public dashboard domain, also the backend CORS origin
+railway up -p <project-id> -e production -s backend --detach    # from lead-radar-backend/
+railway up -p <project-id> -e production -s frontend --detach   # from lead-radar-frontend/
 railway logs -s backend
+railway deployment list -s backend --json    # status while the Rust image builds
 ```
+
+`railway.json` (Config as Code) still works but is deprecated: Railway retires it on 2026-12-01 in
+favour of Infrastructure as Code (`.railway/railway.ts`, `railway config migrate`).
 
 ## Caveats
 
