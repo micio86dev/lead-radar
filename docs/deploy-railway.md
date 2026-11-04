@@ -126,3 +126,27 @@ dashboard.
   `{"job_ids":[],"queued":0}` (`queued: 0` is normal once every lead has drafts, or inside the cooldown).
 - The backend caps automatic runs at three drafts with a ten-minute cooldown, so an hourly tick never
   amplifies provider spending.
+
+## Deploying a service (the only supported path)
+
+`railway up` resolves the upload root through Git. A submodule's `.git` is a file, so running it
+inside `lead-radar-frontend` or `lead-radar-backend` uploads the **parent repository**: Railpack
+analyzes the wrong tree, ignores the submodule's `railway.json`, and the build fails before it starts
+(this happened twice on 2026-11-04 and left production untouched).
+
+Deploy through the script, which exports the committed tree and refuses to ship uncommitted or
+unpushed work:
+
+```
+make deploy-backend        # or: scripts/deploy-railway.sh backend
+make deploy-frontend       # or: scripts/deploy-railway.sh frontend
+```
+
+It runs `git archive HEAD` into a scratch directory, checks that `Dockerfile` and `railway.json` are
+in the exported tree, links that directory to the project, environment and service, then runs
+`railway up --ci`. The Railway service keeps `builder: DOCKERFILE` with `dockerfilePath: /Dockerfile`
+resolved against the upload root, which is why the export must contain the Dockerfile.
+
+The local Docker stack is separate: after a change to `package.json` or `Cargo.toml`, rebuild the
+images with `docker compose build` before `docker compose up -d`.
+

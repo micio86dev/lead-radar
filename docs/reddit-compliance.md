@@ -31,6 +31,15 @@ requests from this host, so subscriber counts were not re-verified).
 Enabling a community whose status is not `validated` is refused with `409 conflict`. Communities are
 seeded as `pending` and disabled: a seed never asserts permission.
 
+## Engagement policy per community
+
+Collecting from a community and replying in it are different permissions. `communities` carries the
+engagement policy a human recorded — `self_promotion` (`allowed`, `ask_mods`, `forbidden`,
+`unknown`), minimum account age and karma, flair requirement, a promotional cooldown and the rule
+text itself — and the publication path refuses to record a pitch when that policy does not say
+`allowed`. `unknown` is not permission. The rules and the operating discipline are in
+[`engagement-playbook.md`](engagement-playbook.md).
+
 ## Actors
 
 An Actor is registered with the exact `actor_id` the operator verified, stored disabled and pending.

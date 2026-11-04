@@ -6,7 +6,7 @@ COMPOSE_TEST := docker compose -f docker-compose.test.yml
 PY := python3
 
 .PHONY: help up down logs ps build migrate seed rescore reset-db test test-backend test-frontend \
-        test-e2e lint fmt dev-api dev-worker dev-frontend check-env
+        test-e2e lint fmt dev-api dev-worker dev-frontend check-env deploy-backend deploy-frontend
 
 help:
 	@echo "Lead Radar targets:"
@@ -23,6 +23,8 @@ help:
 	@echo "  make test-e2e      Playwright end-to-end"
 	@echo "  make lint          fmt check + clippy + prettier check + typecheck"
 	@echo "  make fmt           format backend and frontend"
+	@echo "  make deploy-backend   deploy the committed backend tree to Railway"
+	@echo "  make deploy-frontend  deploy the committed frontend tree to Railway"
 	@echo "  make dev-api       run the API locally (needs .env)"
 	@echo "  make dev-worker    run the worker locally (needs .env)"
 	@echo "  make dev-frontend  run the Astro dev server"
@@ -106,3 +108,12 @@ dev-worker: check-env
 
 dev-frontend:
 	cd $(FRONTEND) && bun run dev
+
+# Deploys go through scripts/deploy-railway.sh: it exports the committed tree and refuses to ship
+# uncommitted or unpushed work. See docs/deploy-railway.md for why `railway up` from a submodule does
+# not work.
+deploy-backend:
+	@scripts/deploy-railway.sh backend
+
+deploy-frontend:
+	@scripts/deploy-railway.sh frontend
