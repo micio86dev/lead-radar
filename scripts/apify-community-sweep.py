@@ -241,9 +241,13 @@ def main() -> int:
         if not args.scheduled:
             print(line, flush=True)
 
+    def plan(line: str) -> None:
+        # A scheduled run's stdout is reserved for the one JSON line, dry run included.
+        print(line, file=sys.stderr if args.scheduled else sys.stdout)
+
     if args.dry_run:
         for index, community in enumerate(targets, 1):
-            print(f"[{index:2}/{len(targets)}] would sweep {community['name']} (actor {args.actor_id})")
+            plan(f"[{index:2}/{len(targets)}] would sweep {community['name']} (actor {args.actor_id})")
     else:
         emit(
             f"sweep over {len(targets)} communities "
@@ -332,7 +336,7 @@ def main() -> int:
         candidates.sort(key=lambda run: run.get("created_at") or "", reverse=True)
         for run in candidates[: max(0, args.reingest_limit)]:
             if args.dry_run:
-                print(f"would re-ingest dataset of run {run['id']} ({run['items_count']} items)")
+                plan(f"would re-ingest dataset of run {run['id']} ({run['items_count']} items)")
                 continue
             status, payload = client.call(
                 "POST", f"/api/v1/providers/apify/runs/{run['id']}/reingest"
@@ -399,17 +403,18 @@ if __name__ == "__main__":
         raise
     except Exception as error:  # pragma: no cover - the point is that a cron never exits silently
         print(f"unexpected failure: {error!r}", file=sys.stderr)
-        print(
-            json.dumps(
-                {
-                    "queued": 0,
-                    "refused": 0,
-                    "reingested": 0,
-                    "stopped_reason": "internal_error",
-                    "actor": None,
-                    "communities": 0,
-                }
-            ),
-            flush=True,
-        )
+        if "--scheduled" in sys.argv:
+            print(
+                json.dumps(
+                    {
+                        "queued": 0,
+                        "refused": 0,
+                        "reingested": 0,
+                        "stopped_reason": "internal_error",
+                        "actor": None,
+                        "communities": 0,
+                    }
+                ),
+                flush=True,
+            )
         raise SystemExit(1)

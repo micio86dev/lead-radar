@@ -449,7 +449,9 @@ with Stub("ok") as stub:
     )
     summary = summary_of(process.stdout)
     check("dry run: exit code", 0, process.returncode)
-    check("dry run: last line is the summary", "dry_run", summary.get("stopped_reason"))
+    check_wait_does_not_hide("dry run", process.stdout)
+    check("dry run: summary", "dry_run", summary.get("stopped_reason"))
+    check("dry run: the plan goes to stderr", True, "would sweep" in process.stderr)
 
 # 7. No token: one JSON line and a non-zero exit, so the platform shows a failed run.
 code, out, _ = run_scheduled(1, token="")
