@@ -6,7 +6,8 @@ COMPOSE_TEST := docker compose -f docker-compose.test.yml
 PY := python3
 
 .PHONY: help up down logs ps build migrate seed rescore reset-db test test-backend test-frontend \
-        test-e2e lint fmt dev-api dev-worker dev-frontend check-env deploy-backend deploy-frontend
+        test-e2e test-scripts lint fmt dev-api dev-worker dev-frontend check-env deploy-backend \
+        deploy-frontend prepare-queue nightly-import nightly-import-show
 
 help:
 	@echo "Lead Radar targets:"
@@ -25,6 +26,8 @@ help:
 	@echo "  make fmt           format backend and frontend"
 	@echo "  make deploy-backend   deploy the committed backend tree to Railway"
 	@echo "  make deploy-frontend  deploy the committed frontend tree to Railway"
+	@echo "  make nightly-import   run the nightly Apify sweep (billable) once, now"
+	@echo "  make nightly-import-show  print what the nightly sweep would do"
 	@echo "  make dev-api       run the API locally (needs .env)"
 	@echo "  make dev-worker    run the worker locally (needs .env)"
 	@echo "  make dev-frontend  run the Astro dev server"
@@ -78,10 +81,19 @@ cron-uninstall:
 prepare-queue:
 	@LOG_FILE=logs/prepare-queue.log scripts/prepare-queue.sh
 
+# The nightly import the platform cron runs at 00:00 UTC. `--dry-run` first: the sweep starts billable
+# Apify runs against whatever API_BASE points at, and the cost guard is the only ceiling.
+nightly-import-show:
+	@scripts/apify-community-sweep.py --scheduled --dry-run
+
+nightly-import:
+	@scripts/apify-community-sweep.py --scheduled
+
 test: test-backend test-frontend test-scripts
 
 test-scripts:
 	@scripts/test-prepare-queue.sh
+	@python3 scripts/test-apify-nightly.py
 
 test-backend:
 	cd $(BACKEND) && cargo test --all-targets

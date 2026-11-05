@@ -56,6 +56,13 @@ is never printed.
 ./scripts/apify-community-sweep.py --only CrossLanguageCalls,eventprofs --extra-terms '"Wordly"'
 ```
 
+The same script runs unattended at 00:00 UTC as the nightly import (`--scheduled`, wired in
+`scripts/cron-entrypoint.sh`). In that mode it sweeps only communities that are **enabled and validated**,
+stops at the first cost-guard refusal instead of retrying, re-ingests the datasets of runs collected in the
+last `--reingest-days` days (no new Apify run, so nothing is billed for it) and prints a single JSON line.
+`--dry-run` prints the plan without patching the Actor or starting a run; see
+[`operations.md`](operations.md#nightly-opportunity-import) for the schedule and the log line.
+
 ## Sources versus Actors
 
 Two records exist and they do different jobs:
