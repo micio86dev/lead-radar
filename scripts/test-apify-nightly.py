@@ -100,6 +100,9 @@ class Stub:
                         {"items": items, "page": 1, "per_page": 100, "total": len(items)},
                     )
                     return
+                if path == "/api/v1/providers/apify/actors" and stub.mode == "actors-down":
+                    self._send(503, {"error": {"code": "unavailable"}})
+                    return
                 if path == "/api/v1/providers/apify/actors":
                     self._send(
                         200,
@@ -142,9 +145,9 @@ class Stub:
                     runs = [
                         {
                             "id": run_id,
-                            "status": "succeeded",
-                            "items_count": 10,
-                            "dataset_id": f"ds-{run_id}",
+                            "status": "running" if stub.mode == "never-terminal" else "succeeded",
+                            "items_count": 0 if stub.mode == "never-terminal" else 10,
+                            "dataset_id": None if stub.mode == "never-terminal" else f"ds-{run_id}",
                             "cost_actual_usd": 0.02,
                             "created_at": iso(0),
                         }
@@ -344,7 +347,8 @@ for attempt in (1, 2, 3):
     with Stub(f"guard@{attempt}", validated=3) as stub:
         code, out, _ = run_scheduled(stub.port)
         summary = summary_of(out)
-        check(f"refusal at attempt {attempt}: exit code", 0, code)
+        # A pass that queued nothing is exit 3; one that queued earlier work is a completed night.
+        check(f"refusal at attempt {attempt}: exit code", 3 if attempt == 1 else 0, code)
         check_wait_does_not_hide(f"refusal at attempt {attempt}", out)
         check(f"refusal at attempt {attempt}: no retry", attempt, len(stub.run_posts))
         check(f"refusal at attempt {attempt}: refused", 1, summary.get("refused"))
@@ -360,7 +364,8 @@ for attempt in (1, 2, 3):
 with Stub("kill") as stub:
     code, out, _ = run_scheduled(stub.port)
     summary = summary_of(out)
-    check("kill switch: exit code", 0, code)
+    # A night that queued nothing is a failed run, so the platform shows it instead of a silent success.
+    check("kill switch: exit code", 3, code)
     check_wait_does_not_hide("kill switch", out)
     check("kill switch: exactly one attempt", 1, len(stub.run_posts))
     check("kill switch: queued", 0, summary.get("queued"))
@@ -407,6 +412,44 @@ with Stub("ok") as stub:
     check("window: exit code", 0, code)
     check("window: the limit keeps the newest candidate", ["run-yesterday"], stub.reingests)
     check("window: report", 1, summary.get("reingested"))
+
+# 6b. --limit-communities is a hard bound, and the pass reports how many it took.
+with Stub("ok", validated=3) as stub:
+    code, out, _ = run_scheduled(stub.port, "--reingest-days", "0", "--limit-communities", "1")
+    summary = summary_of(out)
+    check("limit: exit code", 0, code)
+    check("limit: one run only", 1, len(stub.run_posts))
+    check("limit: communities reported", 1, summary.get("communities"))
+
+# 6c. A failure listing actors still prints the single JSON line.
+with Stub("actors-down") as stub:
+    code, out, _ = run_scheduled(stub.port)
+    summary = summary_of(out)
+    check("actor list down: exit code", 1, code)
+    check_wait_does_not_hide("actor list down", out)
+    check("actor list down: stopped_reason", "actor_list_failed", summary.get("stopped_reason"))
+
+# 6d. A run that never reaches a terminal state stops the night instead of stacking another run.
+with Stub("never-terminal") as stub:
+    code, out, _ = run_scheduled(
+        stub.port, "--reingest-days", "0", "--limit-communities", "2",
+        "--wait-seconds", "1", "--poll-seconds", "0.1",
+    )
+    summary = summary_of(out)
+    check("stalled run: exit code", 0, code)
+    check("stalled run: only one run posted", 1, len(stub.run_posts))
+    check("stalled run: stopped_reason", "run_not_terminal", summary.get("stopped_reason"))
+
+# 6e. A dry run reports itself instead of printing nothing.
+with Stub("ok") as stub:
+    process = subprocess.run(
+        [sys.executable, str(SCRIPT), "--scheduled", "--dry-run",
+         "--api-url", f"http://127.0.0.1:{stub.port}", "--env-file", str(Path("/nonexistent"))],
+        capture_output=True, text=True, env={**os.environ, "API_TOKEN": "test-token"}, timeout=120,
+    )
+    summary = summary_of(process.stdout)
+    check("dry run: exit code", 0, process.returncode)
+    check("dry run: last line is the summary", "dry_run", summary.get("stopped_reason"))
 
 # 7. No token: one JSON line and a non-zero exit, so the platform shows a failed run.
 code, out, _ = run_scheduled(1, token="")

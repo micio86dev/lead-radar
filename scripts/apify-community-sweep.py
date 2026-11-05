@@ -17,9 +17,16 @@ In `--scheduled` mode the sweep stops at the first run the server-side cost guar
 daily ceiling, per-run cap, concurrency), never retries a refused run, re-ingests datasets collected in the
 recent window (free: no new Apify run) and prints exactly one JSON line for the service log.
 
+Every request is a call to the Lead Radar API, so the API owns the actor's charge cap, the item limit and
+the cost guard; this script never talks to Apify and never holds an Apify token.
+
+The listing endpoints are read one page deep (100 rows, the API's maximum): with more communities or runs
+than that, the newest window is what the nightly pass sees, which is why the re-ingestion phase reports its
+own count instead of assuming everything was covered.
+
 Environment: the bearer token comes from API_TOKEN, or from .env (DEV_API_TOKEN / LEAD_RADAR_API_TOKEN) for
-manual runs; the Apify token is only needed for dataset inspection and is never printed. Configuration is
-read from the API, so the approved communities and the actor are the single source of truth.
+manual runs. Configuration is read from the API, so the approved communities and the actor are the single
+source of truth.
 """
 
 from __future__ import annotations
@@ -112,7 +119,6 @@ def main() -> int:
     parser.add_argument("--only", default="", help="comma separated community names to sweep")
     parser.add_argument("--skip", default="", help="comma separated community names to skip")
     parser.add_argument("--items", type=int, default=10, help="items per run (the actor minimum is 10)")
-    parser.add_argument("--cap-usd", type=float, default=0.25, help="provider-side charge cap per run")
     parser.add_argument("--extra-terms", default="", help="comma separated extra quoted phrases")
     parser.add_argument(
         "--actor-id",
@@ -141,6 +147,18 @@ def main() -> int:
         type=int,
         default=10,
         help="at most N datasets re-ingested per pass",
+    )
+    parser.add_argument(
+        "--poll-seconds",
+        type=float,
+        default=float(os.environ.get("SWEEP_POLL_SECONDS", "4")),
+        help="how often to ask whether the current run finished",
+    )
+    parser.add_argument(
+        "--wait-seconds",
+        type=float,
+        default=float(os.environ.get("SWEEP_WAIT_SECONDS", "240")),
+        help="how long to wait for one run before giving up on it",
     )
     parser.add_argument("--dry-run", action="store_true", help="print the plan and change nothing")
     args = parser.parse_args()
@@ -197,10 +215,13 @@ def main() -> int:
     if args.limit_communities > 0:
         targets = targets[: args.limit_communities]
     if not targets:
-        print("no community selected")
+        print("no community selected", file=sys.stderr)
         return finish(0, stopped_reason="no_communities")
 
-    actors = call("GET", "/api/v1/providers/apify/actors")
+    status, actors = client.call("GET", "/api/v1/providers/apify/actors")
+    if status != 200 or not isinstance(actors, dict):
+        print(f"cannot list actors: {status} {actors}", file=sys.stderr)
+        return finish(1, stopped_reason="actor_list_failed")
     actor = next((a for a in actors["items"] if a["actor_id"] == args.actor_id), None)
     if actor is None:
         print(
@@ -209,6 +230,7 @@ def main() -> int:
         )
         return finish(1, stopped_reason="actor_not_registered")
 
+    charge_cap = actor.get("max_total_charge_usd")
     extra = [term.strip() for term in args.extra_terms.split(",") if term.strip()]
     queued: list[dict] = []
     started: set[str] = set()
@@ -223,7 +245,10 @@ def main() -> int:
         for index, community in enumerate(targets, 1):
             print(f"[{index:2}/{len(targets)}] would sweep {community['name']} (actor {args.actor_id})")
     else:
-        emit(f"sweep over {len(targets)} communities (items={args.items}, cap=${args.cap_usd})")
+        emit(
+            f"sweep over {len(targets)} communities "
+            f"(items={args.items}, registry charge cap={charge_cap if charge_cap is not None else 'unset'})"
+        )
 
     if not args.dry_run:
         for index, community in enumerate(targets, 1):
@@ -270,15 +295,21 @@ def main() -> int:
             started.add(run_id)
             queued.append({"run_id": run_id, "community": community["name"]})
             final = None
-            for _ in range(60):
+            attempts = max(1, int(args.wait_seconds / max(0.01, args.poll_seconds)))
+            for _ in range(attempts):
                 status, runs = client.call("GET", "/api/v1/providers/apify/runs?per_page=30")
                 current = next((r for r in runs["items"] if r["id"] == run_id), None) if status == 200 else None
                 if current and current["status"] in TERMINAL:
                     final = current
                     break
-                time.sleep(4)
+                time.sleep(args.poll_seconds)
             if final is None:
-                emit(f"[{index:2}/{len(targets)}] {community['name']:22} timeout")
+                emit(f"[{index:2}/{len(targets)}] {community['name']:22} still running after the wait")
+                if args.scheduled:
+                    # Unattended: starting the next community behind a run we cannot account for would
+                    # push the concurrency guard into refusing, and truncate the night for no reason.
+                    stopped_reason = "run_not_terminal"
+                    break
                 continue
             emit(
                 f"[{index:2}/{len(targets)}] {community['name']:22} {final['status']:9} "
@@ -312,7 +343,14 @@ def main() -> int:
                 emit(f"re-ingest {run['id']} refused {status} {refusal_reason(payload)}")
 
     if args.dry_run:
-        return 0
+        return finish(
+            0,
+            queued=0,
+            refused=refused,
+            reingested=len(reingested),
+            stopped_reason="dry_run",
+            communities=len(targets),
+        )
 
     if not args.scheduled:
         deadline = time.time() + 600
@@ -338,8 +376,14 @@ def main() -> int:
             )
         return 0 if queued else 1
 
+    # Unattended: 0 when the pass did its work, 3 when the guard refused everything it tried, so the
+    # platform shows a failed night instead of a silent one. Nothing is retried either way.
+    if args.scheduled:
+        code = 3 if not queued and refused else 0
+    else:
+        code = 0 if queued else 1
     return finish(
-        0 if args.scheduled or queued else 1,
+        code,
         queued=len(queued),
         refused=refused,
         reingested=len(reingested),
@@ -349,4 +393,23 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except SystemExit:
+        raise
+    except Exception as error:  # pragma: no cover - the point is that a cron never exits silently
+        print(f"unexpected failure: {error!r}", file=sys.stderr)
+        print(
+            json.dumps(
+                {
+                    "queued": 0,
+                    "refused": 0,
+                    "reingested": 0,
+                    "stopped_reason": "internal_error",
+                    "actor": None,
+                    "communities": 0,
+                }
+            ),
+            flush=True,
+        )
+        raise SystemExit(1)

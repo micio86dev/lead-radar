@@ -114,19 +114,25 @@ make nightly-import-show   # print what the sweep would do; reads the API, start
 make nightly-import        # one real pass: billable
 ```
 
-The pass spends money, so three limits apply and none of them is a retry: the community set comes from the
+The pass spends money, so four rules apply and none of them is a retry: the community set comes from the
 API (pending or disabled communities are skipped), every run passes the cost guard (kill switch, daily
-ceiling, per-run cap, concurrency), and the **first refusal ends the night** with the reason in the log
-line. Each run prints exactly one JSON line:
+ceiling, per-run cap, concurrency), the **first refusal ends the night**, and a run that has not reached a
+terminal state before `SWEEP_WAIT_SECONDS` (default 240) ends it too, because starting the next community
+behind a run nobody can account for would only make the concurrency guard refuse. Each run prints exactly
+one JSON line:
 
 ```
 {"queued": 7, "refused": 0, "reingested": 3, "stopped_reason": null, "actor": "9sHOY9RzPYGjmTHo8", "communities": 7}
 ```
 
 `stopped_reason` is a guard reason such as `kill_switch` or `daily_ceiling_reached` when the pass stopped
-early, and `no_communities` / `token_missing` / `actor_not_registered` when there was nothing to do (the
-last three are the states an operator has to fix). A run refused by the guard is never repeated: the next
-night starts from the community list again.
+early, `run_not_terminal` when a run outlived its wait, and `no_communities` / `token_missing` /
+`actor_list_failed` / `community_list_failed` / `actor_not_registered` when there was nothing to do. A run
+refused by the guard is never repeated: the next night starts from the community list again.
+
+The exit code separates "worked" from "did nothing": `0` when the pass queued whatever it could, `3` when
+the guard refused every attempt so the night queued nothing, `1` when the pass could not start. A `3` is the
+signal that the nightly import is not delivering, and the log line says why.
 
 ## Reply pacing
 

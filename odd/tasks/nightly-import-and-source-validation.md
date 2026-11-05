@@ -85,3 +85,19 @@ import one click away from where the operator looks for leads.
   fails the same way. Independent review is therefore missing for the high-risk unit, and the executable
   evidence was strengthened instead: 60 stub checks, including a refusal at the first, second and third
   attempt each proving no retry, plus the backend guard tests and the new reporting-parity test.
+- L12 (independent verification, 2026-11-05): `gentle-ai-verify` ran (after its model was repointed from the
+  removed `opencode-go/space-bunny-free` to `opencode-go/deepseek-v4.1-flash` in
+  `~/.pi/gentle-ai/models.json`, `~/.pi/agent/subagents.json` and the three Pi agent profiles; Claude Code
+  keeps its own `~/.claude/agents/*.md` with `model: sonnet`, untouched) and reported three blocking defects:
+  (B1) a failed actor listing exited without the JSON line, (B2) a night that queued nothing exited 0, (B3)
+  the sweep moved on to the next community after its wait expired, so a slow run pushed the concurrency guard
+  into truncating the night. Plus advisories: a non-JSON line on the `no_communities` path, no summary on
+  `--scheduled --dry-run`, an inert `--cap-usd` flag, a stale docstring, and uncaught exceptions producing no
+  line at all.
+- L13 (fixes): all of them fixed in one batch. The actors listing is tolerant and reports `actor_list_failed`;
+  `no_communities` writes to stderr; the dry run prints its own summary; `run_not_terminal` stops an
+  unattended pass instead of stacking runs; the wait and poll interval are `SWEEP_WAIT_SECONDS` /
+  `SWEEP_POLL_SECONDS`; the banner names the registry charge cap instead of a flag that was never sent; the
+  entry point catches unexpected exceptions and still prints the line; a night that queued nothing exits 3,
+  so the platform shows it. The stub suite grew to 71 checks (bound, actor listing down, stalled run, dry-run
+  summary, refusal at each attempt with the new exit code).
