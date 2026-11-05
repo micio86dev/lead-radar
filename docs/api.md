@@ -317,6 +317,13 @@ Body: `{ "lead_id": "uuid", "comment_id": "uuid|null", "kind": "reply|dm|meeting
   `409 cost_guard_rejected` with `details.reason` in `kill_switch`, `budget_exhausted`,
   `daily_ceiling_reached`, `concurrency_limit`, `actor_not_enabled`, `actor_not_validated`,
   `run_cost_above_limit`, `provider_unconfigured`.
+- `GET /api/v1/reply-console` — query `limit` (1-50), `view` (`to_reply` default, `ignored`,
+  `answered`, `all`) and the legacy `include_answered=1` (= `all`). Returns `{ items, view, stats:
+  { ready, needs_drafts, returned, to_reply, skipped, answered }, pacing }`. An unknown `view` is `400`.
+- `POST /api/v1/opportunities/{id}/reply-skip` — `{ "skipped": true, "reason": "<not_relevant |
+  no_product_fit | community_rules | already_handled | other>" }` marks a lead as not replying;
+  `{ "skipped": false }` clears it. Answers `200 { lead_id, reply_skipped_at, reply_skip_reason }`,
+  `422` for a missing or unknown reason, `409 lead_already_answered` when a reply was already recorded.
 - `GET /api/v1/providers/apify/runs` — query `status`, `actor_registry_id`; `ApifyRun`
   `{ id, actor_registry_id, actor_name, status, items_count, dataset_id, cost_estimate_usd,
   cost_actual_usd, started_at, finished_at, error, job_id, created_at }`. Apify reports spend in USD;

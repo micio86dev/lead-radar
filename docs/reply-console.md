@@ -11,9 +11,16 @@ decision.
 
 - `GET /api/v1/reply-console` returns a compact queue: every active lead that is `qualified` or
   `needs_review`, qualified first, then by score, each with a 700-character content snippet and its
-  existing drafts.
-- Each card has variant tabs (helpful, soft pitch, direct pitch), an inline editor pre-filled with the
-  draft, and four actions: **Copy**, **Open thread**, **Generate drafts** (when missing), **I posted it**.
+  existing drafts. `view=` selects the list: `to_reply` (default), `ignored`, `answered` or `all`.
+- The page is a queue, not a carousel: the leads in the current view are listed on the left (community,
+  score band, state, and a per-row **Skip**) and the selected lead opens beside them. Below 1024px the
+  list stacks above the workspace and scrolls horizontally.
+- The three views are tabs with their counts. They are disjoint: a lead whose reply was recorded is
+  **answered**, a lead you set aside is **ignored**, and neither comes back to the working queue on its
+  own. `?include_answered=1` (the Chrome extension's link) still returns the full list.
+- The workspace has variant tabs (helpful, soft pitch, direct pitch), an inline editor pre-filled with
+  the draft, and the actions: **Copy reply**, **Open thread**, **Generate drafts** (when missing),
+  **I posted it**, **Not replying**.
 - `POST /api/v1/opportunities/:id/reply` performs one audited step: it saves the edited text as a new
   version, approves the comment, records the manual publication and, optionally, the engagement, then
   marks the lead's review as resolved. The same draft cannot be recorded twice.
@@ -23,7 +30,7 @@ decision.
   than five leads have drafts it queues up to three generations, rate limited by the endpoint's
   ten-minute cooldown, so the queue is ready by the time you sit down.
 - Keyboard: `j`/`k` next/previous, `1`/`2`/`3` variant, `c` copy, `o` open thread, `p` posted,
-  `g` generate.
+  `g` generate, `s` not replying.
 
 ## Reddit's throttle and the answered state
 
@@ -34,6 +41,16 @@ replaces the floor. Nothing is retried, and nothing is published from the dashbo
 
 A lead whose reply was recorded leaves the queue. The **Answered** switch (`/reply-queue?answered=1`) shows
 them again with the date, so the same thread is never handled twice by accident.
+
+## Not replying
+
+Some posts are not worth an answer, and a queue that only grows teaches you to ignore it. **Not
+replying** (per row, in the workspace, or `s`) records a reason from a fixed list — `not_relevant`,
+`no_product_fit`, `community_rules`, `already_handled`, `other` — in `leads.reply_skipped_at` /
+`reply_skip_reason`, writes an audit entry, and moves the lead to **Ignored** with the reason and the
+date. The action is reversible: **Bring it back to the queue** clears the mark. A lead whose reply was
+already recorded cannot be set aside (`409 lead_already_answered`), because that would make the two
+states disagree.
 
 ## Follow-ups
 
