@@ -147,7 +147,9 @@ make deploy-nightly        # or: scripts/deploy-railway.sh nightly
 ```
 
 - The image carries both modes, so the queue cron and the nightly cron never drift apart; only
-  `CRON_MODE` and the schedule differ.
+  `CRON_MODE` and the schedule differ. The repository-root `railway.json` pins the builder and the
+  Dockerfile path for both cron services (they exit after one run, so the restart policy is `NEVER`);
+  the schedule stays on the service instance.
 - Spending stays inside the ceilings the Settings page already enforces (`Daily Apify ceiling`, `Max run
   cost`, `Max items per run`) plus the kill switch: the nightly job has no budget of its own, it obeys the
   same cost guard as a manual run.
