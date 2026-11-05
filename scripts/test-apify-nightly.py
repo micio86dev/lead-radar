@@ -42,8 +42,15 @@ def iso(days_ago: float) -> str:
 class Stub:
     """Minimal Apify/Lead Radar surface, with the refusals the cost guard produces in production."""
 
-    def __init__(self, mode: str) -> None:
+    POOL = [
+        ("recruiting", "hr_recruiting"),
+        ("callcentres", "customer_support"),
+        ("customersuccess", "customer_support"),
+    ]
+
+    def __init__(self, mode: str, validated: int = 2) -> None:
         self.mode = mode
+        self.validated = validated
         self.patches: list[dict] = []
         self.run_posts: list[dict] = []
         self.reingests: list[str] = []
@@ -62,43 +69,35 @@ class Stub:
             def do_GET(self) -> None:  # noqa: N802
                 path = self.path.split("?")[0]
                 if path == "/api/v1/communities":
+                    items = [
+                        {
+                            "id": f"c{index}",
+                            "name": name,
+                            "vertical": vertical,
+                            "enabled": True,
+                            "validation_status": "validated",
+                        }
+                        for index, (name, vertical) in enumerate(stub.POOL[: stub.validated], 1)
+                    ]
+                    items += [
+                        {
+                            "id": "c-pending",
+                            "name": "pending-one",
+                            "vertical": "customer_support",
+                            "enabled": True,
+                            "validation_status": "pending",
+                        },
+                        {
+                            "id": "c-disabled",
+                            "name": "disabled-one",
+                            "vertical": "customer_support",
+                            "enabled": False,
+                            "validation_status": "validated",
+                        },
+                    ]
                     self._send(
                         200,
-                        {
-                            "items": [
-                                {
-                                    "id": "c1",
-                                    "name": "recruiting",
-                                    "vertical": "hr_recruiting",
-                                    "enabled": True,
-                                    "validation_status": "validated",
-                                },
-                                {
-                                    "id": "c2",
-                                    "name": "callcentres",
-                                    "vertical": "customer_support",
-                                    "enabled": True,
-                                    "validation_status": "validated",
-                                },
-                                {
-                                    "id": "c3",
-                                    "name": "pending-one",
-                                    "vertical": "customer_support",
-                                    "enabled": True,
-                                    "validation_status": "pending",
-                                },
-                                {
-                                    "id": "c4",
-                                    "name": "disabled-one",
-                                    "vertical": "customer_support",
-                                    "enabled": False,
-                                    "validation_status": "validated",
-                                },
-                            ],
-                            "page": 1,
-                            "per_page": 100,
-                            "total": 4,
-                        },
+                        {"items": items, "page": 1, "per_page": 100, "total": len(items)},
                     )
                     return
                 if path == "/api/v1/providers/apify/actors":
@@ -255,6 +254,9 @@ class Stub:
             return self.rejection("kill_switch")
         if self.mode == "guard" and attempt >= 2:
             return self.rejection("daily_ceiling_reached")
+        if self.mode.startswith("guard@"):
+            # Refuse from the Nth attempt onwards, to prove no refusal point is retried.
+            return self.rejection("daily_ceiling_reached") if attempt >= int(self.mode.split("@")[1]) else None
         return None
 
     def __enter__(self) -> "Stub":
@@ -337,7 +339,24 @@ with Stub("guard") as stub:
     )
     check("guard: no traceback", "", err)
 
-# 3. The kill switch refuses the very first run and nothing else is attempted.
+# 3. Every refusal point is final: refusing the first, second or third run never retries it.
+for attempt in (1, 2, 3):
+    with Stub(f"guard@{attempt}", validated=3) as stub:
+        code, out, _ = run_scheduled(stub.port)
+        summary = summary_of(out)
+        check(f"refusal at attempt {attempt}: exit code", 0, code)
+        check_wait_does_not_hide(f"refusal at attempt {attempt}", out)
+        check(f"refusal at attempt {attempt}: no retry", attempt, len(stub.run_posts))
+        check(f"refusal at attempt {attempt}: refused", 1, summary.get("refused"))
+        expected_queued = attempt - 1
+        check(f"refusal at attempt {attempt}: queued", expected_queued, summary.get("queued"))
+        check(
+            f"refusal at attempt {attempt}: stopped_reason",
+            "daily_ceiling_reached",
+            summary.get("stopped_reason"),
+        )
+
+# 4. The kill switch refuses the very first run and nothing else is attempted.
 with Stub("kill") as stub:
     code, out, _ = run_scheduled(stub.port)
     summary = summary_of(out)
@@ -347,7 +366,7 @@ with Stub("kill") as stub:
     check("kill switch: queued", 0, summary.get("queued"))
     check("kill switch: stopped_reason", "kill_switch", summary.get("stopped_reason"))
 
-# 4. The manual mode the operator runs interactively keeps its scoreboard and its filters.
+# 5. The manual mode the operator runs interactively keeps its scoreboard and its filters.
 with Stub("ok") as stub:
     process = subprocess.run(
         [
@@ -374,7 +393,7 @@ with Stub("ok") as stub:
     check("manual: the sweep header still prints", True, "sweep over 1 communities" in output)
     check("manual: no JSON summary line", False, output.strip().splitlines()[-1].startswith("{"))
 
-# 5. Re-ingestion can be switched off, and the window follows the flag.
+# 6. Re-ingestion can be switched off, and the window follows the flag.
 with Stub("ok") as stub:
     code, out, _ = run_scheduled(stub.port, "--reingest-days", "0")
     summary = summary_of(out)
@@ -389,14 +408,14 @@ with Stub("ok") as stub:
     check("window: the limit keeps the newest candidate", ["run-yesterday"], stub.reingests)
     check("window: report", 1, summary.get("reingested"))
 
-# 6. No token: one JSON line and a non-zero exit, so the platform shows a failed run.
+# 7. No token: one JSON line and a non-zero exit, so the platform shows a failed run.
 code, out, _ = run_scheduled(1, token="")
 summary = summary_of(out)
 check("no token: exit code", 1, code)
 check_wait_does_not_hide("no token", out)
 check("no token: stopped_reason", "token_missing", summary.get("stopped_reason"))
 
-# 7. --dry-run changes nothing on the server.
+# 8. --dry-run changes nothing on the server.
 with Stub("ok") as stub:
     process = subprocess.run(
         [
