@@ -43,8 +43,9 @@ import one click away from where the operator looks for leads.
 
 - [x] T1 · S2, S3 · frontend: validation form on `/sources`, validation-required hint, `Notes` header · commit 93e61bb (frontend)
 - [x] T2 · S4 · frontend: `Import JSON` entry point on the Opportunities header and both empty states · commit 5932c1f (frontend)
-- [x] T3 · S5, S6, S7, S9 · root: `--scheduled` sweep mode with the re-ingestion phase and its stub test · commit b65b31a
-- [x] T4 · S8 · root: cron image mode, entrypoint, compose profile, Makefile target, deploy and operations docs · commit 4179717
+- [x] T3 · S5, S6, S7, S9 · root: `--scheduled` sweep mode with the re-ingestion phase and its stub test · commits b65b31a, 4f2f727
+- [x] T4 · S8 · root: cron image mode, entrypoint, compose profile, Makefile target, deploy and operations docs · commits 4179717, d9729a9
+- [x] T5 · S6 · backend: report the ceilings and kill switch the guard enforces · commit 4c8706e (backend) + d9729a9
 
 ## Log
 
@@ -73,3 +74,14 @@ import one click away from where the operator looks for leads.
   nightly mode ran once against the **local** stack, which carries a real `APIFY_API_TOKEN`. One Apify run
   started (`0.02 USD`, 0 items) and was aborted through the API within two minutes; no other run was queued.
   The stub suite is the only supported way to exercise the nightly mode.
+- L10 (evidence, 2026-11-05): the live deployment has the kill switch **engaged** in the stored override
+  (`GET /api/v1/settings` → `budgets.kill_switch: true`), while `GET /api/v1/providers/apify/usage` and the
+  dashboard reported `false` because they read the environment defaults. So the nightly pass cannot spend
+  anything until the operator disengages it, and the pages that govern spending were lying. Fixed in 4c8706e
+  (backend) with a test that reproduces the divergence, bumped in d9729a9.
+- L11 (verification gap): `gentle-ai-verify` and `jd-judge-a` are unusable in this environment — both abort
+  before their first tool call ("assistant reported an error", 0 tokens after 3 retries) because their pinned
+  models (`opencode-go/space-bunny-free`, `opencode-go/kimi-k3`) fail on every request; a one-line smoke task
+  fails the same way. Independent review is therefore missing for the high-risk unit, and the executable
+  evidence was strengthened instead: 60 stub checks, including a refusal at the first, second and third
+  attempt each proving no retry, plus the backend guard tests and the new reporting-parity test.
