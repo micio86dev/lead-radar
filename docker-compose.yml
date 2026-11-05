@@ -82,6 +82,30 @@ services:
       - 'while true; do /usr/local/bin/prepare-queue.sh || true; sleep "$${INTERVAL_SECONDS}"; done'
     restart: unless-stopped
 
+  # The nightly opportunity import: one shot, no loop. The schedule belongs to the platform (the Railway
+  # cron service runs at 00:00 UTC); locally the same image is exercised on demand and never on a timer,
+  # because an unattended Apify sweep spends money:
+  #   docker compose --profile nightly run --rm nightly
+  nightly:
+    build:
+      context: .
+      dockerfile: deploy/cron/Dockerfile
+    image: lead-radar/cron:0.1.0
+    profiles: [nightly]
+    restart: "no"
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      CRON_MODE: nightly
+      API_BASE: http://api:8080
+      API_TOKEN: ${DEV_API_TOKEN:?DEV_API_TOKEN is required}
+      NIGHTLY_ITEMS: ${NIGHTLY_ITEMS:-10}
+      NIGHTLY_REINGEST_DAYS: ${NIGHTLY_REINGEST_DAYS:-7}
+      NIGHTLY_REINGEST_LIMIT: ${NIGHTLY_REINGEST_LIMIT:-10}
+      NIGHTLY_ONLY: ${NIGHTLY_ONLY:-}
+      NIGHTLY_SKIP: ${NIGHTLY_SKIP:-}
+
 volumes:
   lead-radar-data:
     name: lead-radar-data

@@ -96,6 +96,38 @@ macOS gotcha: launchd cannot read this repository when it lives on an external v
 `Operation not permitted`), so `cron-install` writes a small runner under `~/Library/Application Support`
 and keeps the API base and token in `~/.config/lead-radar` (0600). Nothing secret goes into the plist.
 
+### Nightly opportunity import
+
+The inbox also fills itself without a human: `scripts/apify-community-sweep.py --scheduled` runs one Apify
+run per community that is enabled **and** validated, sequentially, then re-ingests datasets collected in
+the last few days (free — the dataset is read again, no new run). It is the same cron image as the queue
+job, selected by `CRON_MODE=nightly`.
+
+| Where | Mechanism | Schedule | Logs |
+| --- | --- | --- | --- |
+| Railway | service `lead-radar-nightly` (`CRON_MODE=nightly`, cron schedule `0 0 * * *`) | 00:00 UTC | `railway logs -s lead-radar-nightly` |
+| Local stack | `nightly` service under the `nightly` compose profile (one shot, no timer) | on demand | `docker compose --profile nightly run --rm nightly` |
+| Local, native run | `make nightly-import` against `API_BASE` | on demand | stdout |
+
+```
+make nightly-import-show   # print what the sweep would do; reads the API, starts nothing
+make nightly-import        # one real pass: billable
+```
+
+The pass spends money, so three limits apply and none of them is a retry: the community set comes from the
+API (pending or disabled communities are skipped), every run passes the cost guard (kill switch, daily
+ceiling, per-run cap, concurrency), and the **first refusal ends the night** with the reason in the log
+line. Each run prints exactly one JSON line:
+
+```
+{"queued": 7, "refused": 0, "reingested": 3, "stopped_reason": null, "actor": "9sHOY9RzPYGjmTHo8", "communities": 7}
+```
+
+`stopped_reason` is a guard reason such as `kill_switch` or `daily_ceiling_reached` when the pass stopped
+early, and `no_communities` / `token_missing` / `actor_not_registered` when there was nothing to do (the
+last three are the states an operator has to fix). A run refused by the guard is never repeated: the next
+night starts from the community list again.
+
 ## Reply pacing
 
 `REPLY_MIN_INTERVAL_MINUTES` (default 10) is the floor shown after a recorded publication; Reddit's own

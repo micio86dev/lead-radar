@@ -127,6 +127,35 @@ dashboard.
 - The backend caps automatic runs at three drafts with a ten-minute cooldown, so an hourly tick never
   amplifies provider spending.
 
+## Nightly import cron
+
+The second cron service, `lead-radar-nightly`, runs the **same image** (`deploy/cron/Dockerfile`) with
+`CRON_MODE=nightly` on the schedule `0 0 * * *` (midnight UTC): one Apify run per enabled and validated
+community, then a free re-ingestion of datasets collected in the last week. Nothing is retried, and the
+first cost-guard refusal ends the night.
+
+```
+railway add -s lead-radar-nightly
+railway variable set -s lead-radar-nightly RAILWAY_DOCKERFILE_PATH=deploy/cron/Dockerfile
+railway variable set -s lead-radar-nightly CRON_MODE=nightly
+railway variable set -s lead-radar-nightly API_BASE=http://backend.railway.internal:8080
+railway variable set -s lead-radar-nightly API_TOKEN      # bootstrap token, same as the queue cron
+railway variable set -s lead-radar-nightly NIGHTLY_ITEMS=10
+railway variable set -s lead-radar-nightly NIGHTLY_REINGEST_DAYS=7
+# then set cronSchedule=0 0 * * * on the service instance and deploy:
+railway up -p <project-id> -e production -s lead-radar-nightly --detach
+```
+
+- The image carries both modes, so the queue cron and the nightly cron never drift apart; only
+  `CRON_MODE` and the schedule differ.
+- Spending stays inside the ceilings the Settings page already enforces (`Daily Apify ceiling`, `Max run
+  cost`, `Max items per run`) plus the kill switch: the nightly job has no budget of its own, it obeys the
+  same cost guard as a manual run.
+- Logs: `railway logs -s lead-radar-nightly`; exactly one JSON line per night, for example
+  `{"queued":7,"refused":0,"reingested":3,"stopped_reason":null,"actor":"9sHOY9RzPYGjmTHo8","communities":7}`.
+  A non-null `stopped_reason` names the guard that stopped it — do not retry the night by hand, fix the
+  ceiling or the switch first.
+
 ## Deploying a service (the only supported path)
 
 `railway up` resolves the upload root through Git. A submodule's `.git` is a file, so running it
