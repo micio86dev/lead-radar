@@ -143,7 +143,7 @@ railway variable set -s lead-radar-nightly API_TOKEN      # bootstrap token, sam
 railway variable set -s lead-radar-nightly NIGHTLY_ITEMS=10
 railway variable set -s lead-radar-nightly NIGHTLY_REINGEST_DAYS=7
 # then set cronSchedule=0 0 * * * on the service instance and deploy:
-railway up -p <project-id> -e production -s lead-radar-nightly --detach
+make deploy-nightly        # or: scripts/deploy-railway.sh nightly
 ```
 
 - The image carries both modes, so the queue cron and the nightly cron never drift apart; only

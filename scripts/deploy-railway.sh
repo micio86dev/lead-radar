@@ -15,7 +15,8 @@
 #
 #   scripts/deploy-railway.sh backend
 #   scripts/deploy-railway.sh frontend
-#   scripts/deploy-railway.sh cron
+#   scripts/deploy-railway.sh cron       # the hourly reply-queue cron service
+#   scripts/deploy-railway.sh nightly    # the 00:00 UTC import cron service
 #
 # Environment: RAILWAY_PROJECT_ID and RAILWAY_ENVIRONMENT default to this project's production ids.
 set -euo pipefail
@@ -31,10 +32,14 @@ usage() {
 
 [ $# -eq 1 ] || usage
 
+# Cron services are built from this repository with an explicit Dockerfile path, so the required-file check
+# has to look there instead of at the repository root.
+DOCKERFILE="Dockerfile"
 case "$1" in
   backend) SERVICE="backend"; REPO_DIR="$ROOT_DIR/lead-radar-backend" ;;
   frontend) SERVICE="frontend"; REPO_DIR="$ROOT_DIR/lead-radar-frontend" ;;
-  cron) SERVICE="lead-radar-cron"; REPO_DIR="$ROOT_DIR" ;;
+  cron) SERVICE="lead-radar-cron"; REPO_DIR="$ROOT_DIR"; DOCKERFILE="deploy/cron/Dockerfile" ;;
+  nightly) SERVICE="lead-radar-nightly"; REPO_DIR="$ROOT_DIR"; DOCKERFILE="deploy/cron/Dockerfile" ;;
   *) usage ;;
 esac
 
@@ -64,7 +69,7 @@ trap cleanup EXIT
 
 git -C "$REPO_DIR" archive HEAD | tar -x -C "$WORK_DIR"
 
-for required in Dockerfile railway.json; do
+for required in "$DOCKERFILE" railway.json; do
   [ -f "$WORK_DIR/$required" ] || {
     echo "refusing to deploy $SERVICE: $required missing from the exported tree" >&2
     exit 5

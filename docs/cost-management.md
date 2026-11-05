@@ -23,6 +23,11 @@ Defaults are deliberately conservative: 25 EUR promotional budget, 2 EUR per day
 50 items per run, 2 concurrent runs, kill switch off. `PATCH /api/v1/settings` can lower these values
 (invalid or widening overrides are ignored), and `db settings` prints the stored values.
 
+The override is what the guard applies, so it is also what every reporting surface shows:
+`GET /api/v1/providers/apify/usage` and the dashboard's `apify` block read the same effective budgets as
+`guard_apify_run`. A panel that showed the environment defaults instead would advertise a ceiling the
+guard does not honour — and, worse, a kill switch that is engaged while the page says it is off.
+
 ## Currency honesty
 
 The promotional budget is EUR; Apify reports charges in USD (`usageTotalUsd`). The system never applies

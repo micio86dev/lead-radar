@@ -327,7 +327,8 @@ Body: `{ "lead_id": "uuid", "comment_id": "uuid|null", "kind": "reply|dm|meeting
 - `GET /api/v1/providers/apify/usage` → `{ budget_eur, daily_budget_eur, max_run_cost_eur,
   max_concurrent_runs, max_items_per_run, known_actual_usd, estimated_usd, remaining_known_eur,
   runs_total, runs_running, results_total, errors_total, kill_switch,
-  cost_source: "actual"|"estimate"|"unknown", currency_note }`.
+  cost_source: "actual"|"estimate"|"unknown", currency_note }`. The ceilings and `kill_switch` are the
+  effective ones — the operator override when it is valid — not the environment defaults.
 
 ## AI providers
 

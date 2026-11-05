@@ -7,7 +7,7 @@ PY := python3
 
 .PHONY: help up down logs ps build migrate seed rescore reset-db test test-backend test-frontend \
         test-e2e test-scripts lint fmt dev-api dev-worker dev-frontend check-env deploy-backend \
-        deploy-frontend prepare-queue nightly-import nightly-import-show
+        deploy-frontend deploy-nightly prepare-queue nightly-import nightly-import-show
 
 help:
 	@echo "Lead Radar targets:"
@@ -26,6 +26,7 @@ help:
 	@echo "  make fmt           format backend and frontend"
 	@echo "  make deploy-backend   deploy the committed backend tree to Railway"
 	@echo "  make deploy-frontend  deploy the committed frontend tree to Railway"
+	@echo "  make deploy-nightly   deploy the nightly import cron to Railway"
 	@echo "  make nightly-import   run the nightly Apify sweep (billable) once, now"
 	@echo "  make nightly-import-show  print what the nightly sweep would do"
 	@echo "  make dev-api       run the API locally (needs .env)"
@@ -129,3 +130,6 @@ deploy-backend:
 
 deploy-frontend:
 	@scripts/deploy-railway.sh frontend
+
+deploy-nightly:
+	@scripts/deploy-railway.sh nightly
